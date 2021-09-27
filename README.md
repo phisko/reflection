@@ -218,7 +218,7 @@ static constexpr auto attributes = std::make_tuple(
     ...
 );
 ```
-[table](https://github.com/phisko/putils/blob/master/meta/table.md) mapping strings to pointers to the attributes.
+[table](https://github.com/phisko/meta/blob/main/table.md) mapping strings to pointers to the attributes.
 Can be easily generated with `putils_reflection_attributes`.
 
 ### methods
@@ -229,7 +229,7 @@ static constexpr auto methods = std::make_tuple(
     ...
 );
 ```
-[table](https://github.com/phisko/putils/blob/master/meta/table.md) mapping strings to pointers to the methods.
+[table](https://github.com/phisko/meta/blob/main/table.md) mapping strings to pointers to the methods.
 Can be easily generated with `putils_reflection_methods`.
 
 ### parents
