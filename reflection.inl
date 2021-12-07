@@ -3,8 +3,9 @@
 #include "meta/table.hpp"
 #include "meta/nameof.hpp"
 #include "meta/for_each.hpp"
-#include "meta/traits.hpp"
 #include "meta/members.hpp"
+#include "meta/traits/has_member.hpp"
+#include "meta/traits/member_function_signature.hpp"
 
 // Define a type_info for a templated type, like C in the example above
 #define putils_reflection_info_template struct putils::reflection::type_info<refltype>
