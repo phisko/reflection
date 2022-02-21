@@ -2,15 +2,36 @@
 
 #include <string_view>
 #include <optional>
+#include "meta/table.hpp"
 
 namespace putils::reflection {
 	template<typename T>
 	struct type_info {
 		// static constexpr auto class_name = const char *;
-		// static constexpr auto attributes = std::tuple<std::pair<const char *, MemberPointer>...>;
-		// static constexpr auto methods = std::tuple<std::pair<const char *, MemberPointer>...>;
-		// static constexpr auto parents = std::tuple<putils::meta::type<Parent>...>;
-		// static constexpr auto used_types = std::tuple<putils::meta::type<UsedType>...>;
+		// static constexpr auto attributes = std::tuple<attribute_info>;
+		// static constexpr auto methods = std::tuple<attribute_info>;
+		// static constexpr auto parents = std::tuple<used_type_info>;
+		// static constexpr auto used_types = std::tuple<used_type_info>;
+	};
+
+	template<typename MemberPtr, typename MetadataTable>
+	struct attribute_info {
+		const char * name;
+		const MemberPtr ptr;
+		const MetadataTable metadata; // putils::table<Key, Value...>
+	};
+
+	template<typename Member, typename MetadataTable>
+	struct object_attribute_info {
+		const char * name;
+		Member & member;
+		const MetadataTable & metadata; // putils::table<Key, Value...>
+	};
+
+	template<typename T, typename MetadataTable>
+	struct used_type_info {
+		const putils::meta::type<T> type;
+		const MetadataTable metadata; // putils::table<Key, Value...>
 	};
 
 	template<typename T>
@@ -55,66 +76,15 @@ namespace putils::reflection {
 	// Try to find a method called "name" and get a functor calling it on obj
 	template<typename Ret, typename T>
 	constexpr auto get_method(T && obj, std::string_view name) noexcept;
+
+	template<typename ... Metadata, typename Key>
+	constexpr bool has_metadata(const putils::table<Metadata...> & metadata, Key && key) noexcept;
+
+    template<typename Ret, typename ... Metadata, typename Key>
+    constexpr const Ret & get_metadata(const putils::table<Metadata...> & metadata, Key && key) noexcept;
+	
+    template<typename Ret, typename ... Metadata, typename Key>
+    constexpr const Ret * try_get_metadata(const putils::table<Metadata...> & metadata, Key && key) noexcept;
 }
-
-/*
-========== Example ==========
-
-struct A {};
-
-#define refltype A
-putils_reflection_info{
-	putils_reflection_class_name;
-};
-#undef refltype
-
-struct B : A {
-	int i;
-	double d;
-
-	void f() const;
-	bool g(int param);
-};
-
-#define refltype B
-putils_reflection_info{
-	putils_reflection_class_name;
-	putils_reflection_attributes(
-		putils_reflection_attribute(i),
-		putils_reflection_attribute(d)
-	);
-	putils_reflection_methods(
-		putils_reflection_attribute(f),
-		putils_reflection_attribute(g)
-	);
-	putils_reflection_parents(
-		putils_reflection_type(A)
-	);
-};
-#undef refltype
-
-template<typename T>
-struct C {
-	int i;
-};
-
-template<typename T>
-#define refltype C<T>
-putils_reflection_info_template{
-	putils_reflection_class_name;
-	putils_reflection_attributes(
-		putils_reflection_attribute(i)
-	);
-};
-
-int main() {
-	B object;
-	putils::reflection::for_each_attribute(object, [](const char * name, const auto & attr) {
-		std::cout << name << ": " << attr << '\n';
-	});
-
-	return 0;
-}
-*/
 
 #include "reflection.inl"

@@ -69,9 +69,9 @@ int main() {
     // Obtaining member pointers
     {
         putils::reflection::for_each_attribute<Reflectible>(
-            [&](const char * name, auto memberPtr) {
-                assert(memberPtr == &Reflectible::i);
-                std::cout << name << ": " << obj.*memberPtr << '\n';
+            [&](const auto & attr) {
+                assert(attr.ptr == &Reflectible::i);
+                std::cout << attr.name << ": " << obj.*attr.ptr << '\n';
             }
         );
         constexpr auto memberPtr = putils::reflection::get_attribute<int, Reflectible>("i");
@@ -81,9 +81,9 @@ int main() {
     // Obtaining attributes of a specific object
     {
         putils::reflection::for_each_attribute(obj,
-            [&](const char * name, const auto & attr) {
-                assert(&attr == &obj.i);
-                std::cout << name << ": " << attr << '\n';
+            [&](const auto & attr) {
+                assert(&attr.member == &obj.i);
+                std::cout << attr.name << ": " << attr.member << '\n';
             }
         );
         const auto attr = putils::reflection::get_attribute<int>(obj, "i");
@@ -92,32 +92,32 @@ int main() {
 
     // Obtaining member function pointers
     putils::reflection::for_each_method<Reflectible>(
-        [&](const char * name, auto memberPtr) {
-            assert(memberPtr == &Reflectible::getValue);
-            std::cout << name << ": " << (obj.*memberPtr)() << '\n';
+        [&](const auto & method) {
+            assert(method.ptr == &Reflectible::getValue);
+            std::cout << method.name << ": " << (obj.*method.ptr)() << '\n';
         }
     );
 
     // Obtaining functors to call the method on a given object
     putils::reflection::for_each_method(obj,
-        [](const char * name, auto && func) {
+        [](const auto & method) {
             // func is a functor that calls obj.getValue()
-            std::cout << name << ": " << func() << '\n';
+            std::cout << method.name << ": " << method.member() << '\n';
         }
     );
 
     putils::reflection::for_each_parent<Reflectible>(
-        [](const auto type) {
+        [](const auto & type) {
             // type: putils::meta::type<Parent>
-            using T = putils_wrapped_type(type);
+            using T = putils_wrapped_type(type.type);
             std::cout << typeid(T).name() << '\n';
         }
     );
 
     putils::reflection::for_each_used_type<Reflectible>(
-        [](const auto type) {
+        [](const auto & type) {
             // type: putils::meta::type<int>
-            using T = putils_wrapped_type(type);
+            using T = putils_wrapped_type(type.type);
             std::cout << typeid(T).name() << '\n';
         }
     );
@@ -143,7 +143,7 @@ static_assert(*attr == 0);
 constexpr size_t countAttributes() {
     size_t ret = 0;
     putils::reflection::for_each_attribute<Reflectible>(
-        [&](const char * name, const auto member) {
+        [&](const auto & attr) {
             ++ret;
         }
 	);
@@ -283,10 +283,10 @@ Once a type is declared reflectible, iterating over any of its reflectible prope
 
 ```cpp
 namespace putils::reflection {
-    template<typename T, typename Func> // Func: void(const char * name, MemberPointer ptr)
+    template<typename T, typename Func> // Func: void(const attribute_info & attr)
     void for_each_attribute(Func && func) noexcept;
 
-    template<typename T, typename Func> // Func: void(const char * name, Member && member)
+    template<typename T, typename Func> // Func: void(const object_attribute_info & attr)
     void for_each_attribute(T && obj, Func && func) noexcept;
 }
 ```
@@ -297,10 +297,10 @@ Lets client code iterate over the attributes for a given type.
 
 ```cpp
 namespace putils::reflection {
-    template<typename T, typename Func> // Func: void(const char * name, MemberPointer ptr)
+    template<typename T, typename Func> // Func: void(const attribute_info & attr)
     void for_each_method(Func && func) noexcept;
 
-    template<typename T, typename Func> // Func: void(const char * name, const Functor & functor)
+    template<typename T, typename Func> // Func: void(const object_attribute_info & attr)
     void for_each_method(T && obj, Func && func) noexcept;
 }
 ```
@@ -311,7 +311,7 @@ Lets client code iterate over the methods for a given type.
 
 ```cpp
 namespace putils::reflection {
-    template<typename T, typename Func> // Func: void(const char * name, TypeObject type)
+    template<typename T, typename Func> // Func: void(const used_type_info & attr)
     void for_each_parent(Func && func) noexcept;
 }
 ```
@@ -322,7 +322,7 @@ Lets client code iterate over the parents for a given type.
 
 ```cpp
 namespace putils::reflection {
-    template<typename T, typename Func> // Func: void(const char * name, TypeObject type)
+    template<typename T, typename Func> // Func: void(const used_type_info & attr)
     void for_each_used_type(Func && func) noexcept;
 }
 ```
