@@ -21,12 +21,22 @@ namespace putils::reflection {
 		const MetadataTable metadata; // putils::table<Key, Value...>
 	};
 
+    template<typename MemberPtr, typename MetadataTable>
+    using method_info = attribute_info<MemberPtr, MetadataTable>;
+
 	template<typename Member, typename MetadataTable>
 	struct object_attribute_info {
 		const char * name;
 		Member & member;
 		const MetadataTable & metadata; // putils::table<Key, Value...>
 	};
+
+    template<typename Callback, typename MetadataTable>
+    struct object_method_info {
+        const char * name;
+        const Callback & method;
+        const MetadataTable & metadata; // putils::table<Key, Value...>
+    };
 
 	template<typename T, typename MetadataTable>
 	struct used_type_info {

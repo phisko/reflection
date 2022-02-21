@@ -231,9 +231,9 @@ namespace putils::reflection {
 	template<typename T, typename Func>
 	constexpr void for_each_method(T && obj, Func && func) noexcept {
 		for_each_method<std::decay_t<T>>([&](const auto & attrInfo) noexcept {
-			func(object_attribute_info{
+			func(object_method_info{
 				.name = attrInfo.name,
-				.member = [&](auto && ... args) { return (obj.*attrInfo.metadata)(FWD(args)...); },
+				.method = [&](auto && ... args) { return (obj.*attrInfo.ptr)(FWD(args)...); },
 				.metadata = attrInfo.metadata
 			});
 		});
