@@ -202,7 +202,7 @@ TEST(ReflectionTest, GetMissingAttributePointer) {
 }
 
 TEST(ReflectionTest, GetAttributeReference) {
-    constexpr Reflectible obj;
+    static constexpr Reflectible obj;
 
     constexpr auto iParentAttr = putils::reflection::get_attribute<int>(obj, "iParent");
     static_assert(iParentAttr == &obj.iParent);
@@ -326,18 +326,42 @@ TEST(ReflectionTest, GetMethodConstexprPointer) {
     static_assert(*fParentMethod == &Reflectible::fParent);
 
     // TODO: I'd prefer not have to cast here, and have get_method return the const qualified member pointer
-    constexpr auto cfParentMethod = putils::reflection::get_method<int(double), Parent>("cfParent");
+#ifdef _MSC_VER // TODO: I wish this compiled on gcc
+    constexpr auto cfParentMethod = putils::reflection::get_method<int(double), Reflectible>("cfParent");
     static_assert(cfParentMethod != std::nullopt);
     static_assert(*cfParentMethod == (int (Reflectible::*)(double))&Reflectible::cfParent);
+#endif
 
     constexpr auto fMethod = putils::reflection::get_method<int(double), Reflectible>("f");
     static_assert(fMethod != std::nullopt);
     static_assert(*fMethod == &Reflectible::f);
 
     // TODO: I'd prefer not have to cast here, and have get_method return the const qualified member pointer
+#ifdef _MSC_VER // TODO: I wish this compiled on gcc
     constexpr auto cfMethod = putils::reflection::get_method<int(double), Reflectible>("cf");
     static_assert(cfMethod != std::nullopt);
     static_assert(*cfMethod == (int (Reflectible::*)(double))&Reflectible::cf);
+#endif
+}
+
+TEST(ReflectionTest, GetMethodFullSignatureConstexprPointer) {
+    // TODO: I'd prefer not have to specify the noexcept in all these
+    // TODO: I'd prefer being able to use Reflectible::* instead of Parent::*
+    constexpr auto fParentMethod = putils::reflection::get_method<int (Parent::*)(double) noexcept>("fParent");
+    static_assert(fParentMethod != std::nullopt);
+    static_assert(*fParentMethod == &Reflectible::fParent);
+
+    constexpr auto cfParentMethod = putils::reflection::get_method<int (Parent::*)(double) const noexcept>("cfParent");
+    static_assert(cfParentMethod != std::nullopt);
+    static_assert(*cfParentMethod == &Reflectible::cfParent);
+
+    constexpr auto fMethod = putils::reflection::get_method<int (Reflectible::*)(double) noexcept>("f");
+    static_assert(fMethod != std::nullopt);
+    static_assert(*fMethod == &Reflectible::f);
+
+    constexpr auto cfMethod = putils::reflection::get_method<int (Reflectible::*)(double) const noexcept>("cf");
+    static_assert(cfMethod != std::nullopt);
+    static_assert(*cfMethod == &Reflectible::cf);
 }
 
 TEST(ReflectionTest, GetMissingMethodConstexprPointer) {
@@ -346,17 +370,17 @@ TEST(ReflectionTest, GetMissingMethodConstexprPointer) {
 }
 
 TEST(ReflectionTest, GetMethodPointer) {
-    const auto fParentMethod = putils::reflection::get_method<int(double), Reflectible>("fParent");
-    EXPECT_EQ(*fParentMethod, &Reflectible::fParent);
+    // TODO: I'd prefer not have to cast here, and have get_method return the const/noexcept qualified member pointer
 
-    // TODO: I'd prefer not have to cast here, and have get_method return the const qualified member pointer
+    const auto fParentMethod = putils::reflection::get_method<int(double), Reflectible>("fParent");
+    EXPECT_EQ(*fParentMethod, (int (Reflectible::*)(double))&Reflectible::fParent);
+
     const auto cfParentMethod = putils::reflection::get_method<int(double), Reflectible>("cfParent");
     EXPECT_EQ(*cfParentMethod, (int (Reflectible::*)(double))&Reflectible::cfParent);
 
     const auto fMethod = putils::reflection::get_method<int(double), Reflectible>("f");
-    EXPECT_EQ(*fMethod, &Reflectible::f);
+    EXPECT_EQ(*fMethod, (int (Reflectible::*)(double))&Reflectible::f);
 
-    // TODO: I'd prefer not have to cast here, and have get_method return the const qualified member pointer
     const auto cfMethod = putils::reflection::get_method<int(double), Reflectible>("cf");
     EXPECT_EQ(*cfMethod, (int (Reflectible::*)(double))&Reflectible::cf);
 }
@@ -366,27 +390,44 @@ TEST(ReflectionTest, GetMissingMethodPointer) {
     EXPECT_EQ(method, std::nullopt);
 }
 
+TEST(ReflectionTest, GetMethodConstexprReference) {
+    static constexpr Reflectible obj;
+
+    static constexpr auto cfParentMethod = putils::reflection::get_method<int (Parent::*)(double) const noexcept>(obj, "cfParent");
+    static_assert(cfParentMethod != std::nullopt);
+    static_assert((*cfParentMethod)(42) == obj.cfParent(42));
+
+    static constexpr auto cfMethod = putils::reflection::get_method<int (Reflectible::*)(double) const noexcept>(obj, "cf");
+    static_assert(cfMethod != std::nullopt);
+    static_assert((*cfMethod)(42) == obj.cf(42));
+}
+
 TEST(ReflectionTest, GetMethodReference) {
-    static constexpr Reflectible cobj;
     Reflectible obj;
 
     const auto fParentMethod = putils::reflection::get_method<int(double)>(obj, "fParent");
     EXPECT_EQ((*fParentMethod)(42), obj.fParent(42));
 
-    static constexpr auto cfParentMethod = putils::reflection::get_method<int(double)>(cobj, "cfParent");
-    static_assert((*cfParentMethod)(42) == cobj.cfParent(42));
+    const auto cfParentMethod = putils::reflection::get_method<int(double)>(obj, "cfParent");
+    EXPECT_EQ((*cfParentMethod)(42), obj.cfParent(42));
 
     const auto fMethod = putils::reflection::get_method<int(double)>(obj, "f");
     EXPECT_EQ((*fMethod)(42), obj.f(42));
 
-    static constexpr auto cfMethod = putils::reflection::get_method<int(double)>(cobj, "cf");
-    static_assert((*cfMethod)(42) == cobj.cf(42));
+    const auto cfMethod = putils::reflection::get_method<int(double)>(obj, "cf");
+    EXPECT_EQ((*cfMethod)(42), obj.cf(42));
 }
 
-TEST(ReflectionTest, GetMissingMethodReference) {
+TEST(ReflectionTest, GetMissingMethodConstexprReference) {
     static constexpr Reflectible obj;
     static constexpr auto method = putils::reflection::get_method<int(double)>(obj, "foo");
     static_assert(method == std::nullopt);
+}
+
+TEST(ReflectionTest, GetMissingMethodReference) {
+    const Reflectible obj;
+    const auto method = putils::reflection::get_method<int(double)>(obj, "foo");
+    EXPECT_EQ(method, std::nullopt);
 }
 
 /*
