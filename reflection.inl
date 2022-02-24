@@ -61,13 +61,12 @@ namespace putils::reflection {
 	constexpr bool has_##NAME() noexcept {\
 		if constexpr (detail::has_member_##NAME<type_info<T>>())\
 			return true;\
-		bool ret = false;\
-		for_each_parent<T>([&](const auto & parent) noexcept {\
+		return for_each_parent<T>([](const auto & parent) noexcept -> bool {\
 			using Parent = putils_wrapped_type(parent.type);\
-			if constexpr (detail::has_member_##NAME<type_info<Parent>>())\
-				ret = true;\
+			if constexpr (detail::has_member_##NAME<type_info<Parent>>())  \
+                return true;\
+            return false;\
 		});\
-		return ret;\
 	}
 
 #define putils_impl_reflection_member_get_single(NAME, defaultValue) \
@@ -143,13 +142,6 @@ namespace putils::reflection {
 			static constexpr auto methods = get_all_methods<T>(parents);
 			static constexpr auto used_types = get_all_used_types<T>(parents);
 		};
-
-		template<typename Attributes, typename Func>
-		constexpr void for_each_member(Attributes && attributes, Func && func) noexcept {
-			putils::tuple_for_each(attributes, [&func](auto && p) noexcept {
-				func(p.first, p.second);
-			});
-		}
 	}
 
 #pragma endregion
@@ -169,8 +161,8 @@ namespace putils::reflection {
 	}\
 \
 	template<typename T, typename Func>\
-	constexpr void for_each_##NAME(Func && func) noexcept {\
-		tuple_for_each(get_##NAME##s<T>(), func);\
+	constexpr auto for_each_##NAME(Func && func) noexcept {\
+		return tuple_for_each(get_##NAME##s<T>(), func);\
 	}
 
 	// get_attributes/methods<T>():
@@ -189,11 +181,10 @@ namespace putils::reflection {
 	putils_impl_reflection_member_getter_and_for_each(used_type);
 
 #pragma region attributes
-	// For each attribute in T, get a reference to it in obj
 	template<typename T, typename Func>
-	constexpr void for_each_attribute(T && obj, Func && func) noexcept {
-		for_each_attribute<std::decay_t<T>>([&](const auto & attrInfo) noexcept {
-			func(object_attribute_info{
+	constexpr auto for_each_attribute(T && obj, Func && func) noexcept {
+		return for_each_attribute<std::decay_t<T>>([&](const auto & attrInfo) noexcept {
+			return func(object_attribute_info{
 				.name = attrInfo.name,
 				.member = obj.*attrInfo.ptr,
 				.metadata = attrInfo.metadata
@@ -201,37 +192,33 @@ namespace putils::reflection {
 		});
 	}
 
-	// Try to find an attribute called "name" and get a member pointer to it
-	template<typename Ret, typename T>
-	constexpr std::optional<Ret T::*> get_attribute(std::string_view name) noexcept {
-		std::optional<Ret T::*> ret;
-		for_each_attribute<T>([&](const auto & attr) noexcept {
-			if constexpr (std::is_same<putils::MemberType<putils_typeof(attr.ptr)>, Ret>()) {
+	template<typename Attribute, typename T>
+	constexpr std::optional<Attribute T::*> get_attribute(std::string_view name) noexcept {
+		return for_each_attribute<T>([&](const auto & attr) noexcept -> std::optional<Attribute T::*> {
+			if constexpr (std::is_same<putils::MemberType<putils_typeof(attr.ptr)>, Attribute>()) {
 				if (name == attr.name)
-					ret = attr.ptr;
+					return (Attribute T::*)attr.ptr;
 			}
+            return std::nullopt;
 		});
-		return ret;
 	}
 
-	// Try to find an attribute called "name" and get a reference to it in obj
-	template<typename Ret, typename T>
+	template<typename Attribute, typename T>
 	constexpr auto get_attribute(T && obj, std::string_view name) noexcept {
-		const auto member = get_attribute<Ret, std::decay_t<T>>(name);
+		const auto member = get_attribute<Attribute, std::decay_t<T>>(name);
 
-		using ReturnType = decltype(&(obj.*(*member)));
+        using ReturnType = decltype(&(obj.*(*member)));
 		if (!member)
-			return (ReturnType)nullptr;
+			return ReturnType(nullptr);
 		return &(obj.*(*member));
 	}
 #pragma endregion
 
 #pragma region methods
-	// For each method in T, get a functor calling it on obj
 	template<typename T, typename Func>
-	constexpr void for_each_method(T && obj, Func && func) noexcept {
-		for_each_method<std::decay_t<T>>([&](const auto & attrInfo) noexcept {
-			func(object_method_info{
+	constexpr auto for_each_method(T && obj, Func && func) noexcept {
+		return for_each_method<std::decay_t<T>>([&](const auto & attrInfo) noexcept {
+			return func(object_method_info{
 				.name = attrInfo.name,
 				.method = [&](auto && ... args) { return (obj.*attrInfo.ptr)(FWD(args)...); },
 				.metadata = attrInfo.metadata
@@ -239,32 +226,30 @@ namespace putils::reflection {
 		});
 	}
 
-	// Try to find a method called "name" and get a member function pointer to it
-	template<typename Ret, typename T>
-	constexpr std::optional<Ret T::*> get_method(std::string_view name) noexcept {
-		std::optional<Ret T:: *> ret;
-		for_each_method<T>([&](std::string_view attrName, const auto member) noexcept {
-			using wantedSignature = putils::member_function_signature<Ret T::*>;
-			using currentSignature = putils::member_function_signature<putils_typeof(member)>;
-			if constexpr (std::is_same<wantedSignature, currentSignature>()) {
-				if (name == attrName)
-					ret = (Ret T::*)member;
-			}
-		});
-		return ret;
-	}
+	template<typename Signature, typename T>
+    constexpr auto get_method(std::string_view name) noexcept {
+        return for_each_method<T>([&](const auto &attr) noexcept -> std::optional<Signature T::*> {
+            using currentSignature = putils::member_function_signature<putils_typeof(attr.ptr)>;
+            if constexpr (std::is_same<Signature, currentSignature>()) {
+                if (name == attr.name)
+                    return (Signature T::*)attr.ptr;
+            }
+            return std::nullopt;
+        });
+    }
 
-	// Try to find a method called "name" and get a functor calling it on obj
-	template<typename Ret, typename T>
+	template<typename Signature, typename T>
 	constexpr auto get_method(T && obj, std::string_view name) noexcept {
-		const auto member = get_method<Ret, std::decay_t<T>>(name);
+        const auto method = get_method<Signature, std::decay_t<T>>(name);
 
-		const auto ret = [&obj, member](auto && ... args) noexcept {
-			return (obj.*(*member))(FWD(args)...);
+		const auto ret = [&obj, method](auto && ... args) noexcept {
+            const auto ptr = *method;
+            auto & decayed = (std::decay_t<T> &)obj; // method might have lost its qualifier
+            return (decayed.*ptr)(FWD(args)...);
 		};
 
 		using ReturnType = std::optional<decltype(ret)>;
-		if (!member)
+		if (!method)
 			return ReturnType(std::nullopt);
 		return ReturnType(ret);
 	}

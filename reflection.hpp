@@ -4,6 +4,10 @@
 #include <optional>
 #include "meta/table.hpp"
 
+#include <type_traits>
+#include <utility>
+#include <functional>
+
 namespace putils::reflection {
 	template<typename T>
 	struct type_info {
@@ -47,44 +51,51 @@ namespace putils::reflection {
 	template<typename T>
 	constexpr auto get_class_name() noexcept;
 
-	// For each parent of T, get a `putils::type<Parent>` object
+	// For each parent of T, get a used_type_info
+    // Same behavior as putils::tuple_for_each
 	template<typename T, typename Func>
-	constexpr void for_each_parent(Func && func) noexcept;
+	constexpr auto for_each_parent(Func && func) noexcept;
 
-	// For each type used by T, get a `putils::type<Type>` object
+	// For each type used by T, get a used_type_info
+    // Same behavior as putils::tuple_for_each
 	template<typename T, typename Func>
-	constexpr void for_each_used_type(Func && func) noexcept;
+	constexpr auto for_each_used_type(Func && func) noexcept;
 
-	// For each attribute in T, get its name and a member pointer to it
+	// For each attribute in T, get an attribute_info
+    // Same behavior as putils::tuple_for_each
 	template<typename T, typename Func>
-	constexpr void for_each_attribute(Func && func) noexcept;
+	constexpr auto for_each_attribute(Func && func) noexcept;
 
-	// For each attribute in T, get its name and a reference to it in obj
+	// For each attribute in T, get an object_attribute_info
+    // Same behavior as putils::tuple_for_each
 	template<typename T, typename Func>
-	constexpr void for_each_attribute(T && obj, Func && func) noexcept;
+	constexpr auto for_each_attribute(T && obj, Func && func) noexcept;
 
-	// Try to find an attribute called "name" and get a member pointer to it
-	template<typename Ret, typename T>
-	constexpr std::optional<Ret T:: *> get_attribute(std::string_view name) noexcept;
+	// Try to find an attribute called "name" and get a member pointer to it, or nullopt
+	template<typename Attribute, typename T>
+	constexpr std::optional<Attribute T::*> get_attribute(std::string_view name) noexcept;
 
-	// Try to find an attribute called "name" and get a reference to it in obj
-	template<typename Ret, typename T>
-	constexpr auto get_attribute(T && obj, std::string_view name) noexcept;
+	// Try to find an attribute called "name" and get a pointer to it in obj, or nullptr
+	template<typename Attribute, typename T>
+	constexpr auto /* [const] Attribute * */ get_attribute(T && obj, std::string_view name) noexcept;
 
-	// For each method in T, get its name and a member pointer to it
+	// For each method in T, get an attribute_info
+    // Same behavior as putils::tuple_for_each
 	template<typename T, typename Func>
-	constexpr void for_each_method(Func && func) noexcept;
+	constexpr auto for_each_method(Func && func) noexcept;
 
-	// For each method in T, get its name and a functor calling it on obj
+	// For each method in T, get an object_method_info
+    // Same behavior as putils::tuple_for_each
 	template<typename T, typename Func>
-	constexpr void for_each_method(T && obj, Func && func) noexcept;
+	constexpr auto for_each_method(T && obj, Func && func) noexcept;
 
-	// Try to find a method called "name" and get a member function pointer to it
-	template<typename Ret, typename T>
-	constexpr std::optional<Ret T:: *> get_method(std::string_view name) noexcept;
+    // Try to find a method called "name" and get an optional functor taking a `T` that calls the method on it
+    // `Const` template argument is required when getting pointers to const methods in a constexpr context
+    template<typename Signature, typename T>
+	constexpr auto get_method(std::string_view name) noexcept;
 
-	// Try to find a method called "name" and get a functor calling it on obj
-	template<typename Ret, typename T>
+	// Try to find a method called "name" and get an optional functor calling it on obj
+	template<typename Signature, typename T>
 	constexpr auto get_method(T && obj, std::string_view name) noexcept;
 
 	template<typename ... Metadata, typename Key>
