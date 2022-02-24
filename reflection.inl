@@ -226,6 +226,55 @@ namespace putils::reflection {
 		});
 	}
 
+    namespace detail {
+        template<typename Signature, typename T>
+        constexpr auto get_method(std::string_view name) noexcept {
+            return for_each_method<T>([&](const auto & attr) noexcept -> std::optional<Signature> {
+                if constexpr (std::is_same<Signature, putils_typeof(attr.ptr)>()) {
+                    if (name == attr.name)
+                        return attr.ptr;
+                }
+                return std::nullopt;
+            });
+        }
+
+        template<typename Signature>
+        struct get_method_helper;
+
+        template<typename Ret, typename T, typename ... Args>
+        struct get_method_helper<Ret (T::*)(Args...)> {
+            static constexpr auto get(std::string_view name) noexcept {
+                return detail::get_method<Ret (T::*)(Args...), T>(name);
+            }
+        };
+
+        template<typename Ret, typename T, typename ... Args>
+        struct get_method_helper<Ret (T::*)(Args...) const> {
+            static constexpr auto get(std::string_view name) noexcept {
+                return detail::get_method<Ret (T::*)(Args...) const, T>(name);
+            }
+        };
+
+        template<typename Ret, typename T, typename ... Args>
+        struct get_method_helper<Ret (T::*)(Args...) noexcept> {
+            static constexpr auto get(std::string_view name) noexcept {
+                return detail::get_method<Ret (T::*)(Args...) noexcept, T>(name);
+            }
+        };
+
+        template<typename Ret, typename T, typename ... Args>
+        struct get_method_helper<Ret (T::*)(Args...) const noexcept> {
+            static constexpr auto get(std::string_view name) noexcept {
+                return detail::get_method<Ret (T::*)(Args...) const noexcept, T>(name);
+            }
+        };
+    };
+
+    template<typename Signature>
+    constexpr auto get_method(std::string_view name) noexcept {
+        return detail::get_method_helper<Signature>::get(name);
+    }
+
 	template<typename Signature, typename T>
     constexpr auto get_method(std::string_view name) noexcept {
         return for_each_method<T>([&](const auto &attr) noexcept -> std::optional<Signature T::*> {
@@ -240,18 +289,27 @@ namespace putils::reflection {
 
 	template<typename Signature, typename T>
 	constexpr auto get_method(T && obj, std::string_view name) noexcept {
-        const auto method = get_method<Signature, std::decay_t<T>>(name);
+        const auto callMethod = [&](const auto method) {
+            const auto ret = [&obj, method](auto && ... args) noexcept {
+                const auto ptr = *method;
+                auto & decayed = (std::decay_t<T> &)obj; // method might have lost its qualifier
+                return (decayed.*ptr)(FWD(args)...);
+            };
 
-		const auto ret = [&obj, method](auto && ... args) noexcept {
-            const auto ptr = *method;
-            auto & decayed = (std::decay_t<T> &)obj; // method might have lost its qualifier
-            return (decayed.*ptr)(FWD(args)...);
-		};
+            using ReturnType = std::optional<decltype(ret)>;
+            if (!method)
+                return ReturnType(std::nullopt);
+            return ReturnType(ret);
+        };
 
-		using ReturnType = std::optional<decltype(ret)>;
-		if (!method)
-			return ReturnType(std::nullopt);
-		return ReturnType(ret);
+        if constexpr (std::is_member_function_pointer_v<Signature> ) {
+            const auto method = get_method<Signature>(name);
+            return callMethod(method);
+        }
+        else {
+            const auto method = get_method<Signature, std::decay_t<T>>(name);
+            return callMethod(method);
+        }
 	}
 #pragma endregion
 

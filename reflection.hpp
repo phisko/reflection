@@ -93,6 +93,9 @@ namespace putils::reflection {
     // `Const` template argument is required when getting pointers to const methods in a constexpr context
     template<typename Signature, typename T>
 	constexpr auto get_method(std::string_view name) noexcept;
+    // Alternatively, provide the complete member function type (i.e. `void (Type::*)()`). Required in a constexpr context with gcc
+    template<typename Signature>
+    constexpr auto get_method(std::string_view name) noexcept;
 
 	// Try to find a method called "name" and get an optional functor calling it on obj
 	template<typename Signature, typename T>
