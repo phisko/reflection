@@ -4,17 +4,21 @@
 
 struct Parent {
     int iParent = 84;
-    int fParent(double d) const noexcept { return (int)d + 84; }
+    const int ciParent = -84;
+    int fParent(double d) noexcept { return (int)d + iParent; }
+    constexpr int cfParent(double d) const noexcept { return (int)d - ciParent; }
 };
 
 #define refltype Parent
 putils_reflection_info{
     putils_reflection_class_name;
     putils_reflection_attributes(
-        putils_reflection_attribute(iParent)
+        putils_reflection_attribute(iParent),
+        putils_reflection_attribute(ciParent)
     );
     putils_reflection_methods(
-        putils_reflection_attribute(fParent)
+        putils_reflection_attribute(fParent),
+        putils_reflection_attribute(cfParent)
     );
     putils_reflection_used_types(
         putils_reflection_type(int)
@@ -24,9 +28,12 @@ putils_reflection_info{
 
 struct Reflectible : Parent {
     int i = 42;
+    const int ci = -42;
     const char * s = "foo";
+    const char * const cs = "constfoo";
 
-    int f(double d) const noexcept { return (int)d + 42; }
+    int f(double d) noexcept { return (int)d + i; }
+    constexpr int cf(double d) const noexcept { return (int)d + ci; }
 };
 
 #define refltype Reflectible
@@ -34,10 +41,13 @@ putils_reflection_info{
     putils_reflection_class_name;
     putils_reflection_attributes(
         putils_reflection_attribute(i),
-        putils_reflection_attribute(s)
+        putils_reflection_attribute(ci),
+        putils_reflection_attribute(s),
+        putils_reflection_attribute(cs)
     );
     putils_reflection_methods(
-        putils_reflection_attribute(f)
+        putils_reflection_attribute(f),
+        putils_reflection_attribute(cf)
     );
     putils_reflection_parents(
         putils_reflection_type(Parent)
@@ -85,32 +95,47 @@ TEST(ReflectionTest, AttributesSize) {
     {
         constexpr auto & attributes = putils::reflection::get_attributes<Parent>();
         constexpr auto size = std::tuple_size<putils_typeof(attributes)>();
-        static_assert(size == 1);
+        static_assert(size == 2);
     }
     {
         constexpr auto & attributes = putils::reflection::get_attributes<Reflectible>();
         constexpr auto size = std::tuple_size<putils_typeof(attributes)>();
-        static_assert(size == 3);
+        static_assert(size == 6);
     }
     SUCCEED();
 }
 
 TEST(ReflectionTest, GetAttributes) {
     constexpr auto attributes = putils::reflection::get_attributes<Reflectible>();
+
     static_assert(std::get<0>(attributes).name == std::string_view("i"));
     static_assert(std::get<0>(attributes).ptr == &Reflectible::i);
-    static_assert(std::get<1>(attributes).name == std::string_view("s"));
-    static_assert(std::get<1>(attributes).ptr == &Reflectible::s);
-    static_assert(std::get<2>(attributes).name == std::string_view("iParent"));
-    static_assert(std::get<2>(attributes).ptr == &Parent::iParent);
+
+    static_assert(std::get<1>(attributes).name == std::string_view("ci"));
+    static_assert(std::get<1>(attributes).ptr == &Reflectible::ci);
+
+    static_assert(std::get<2>(attributes).name == std::string_view("s"));
+    static_assert(std::get<2>(attributes).ptr == &Reflectible::s);
+
+    static_assert(std::get<3>(attributes).name == std::string_view("cs"));
+    static_assert(std::get<3>(attributes).ptr == &Reflectible::cs);
+
+    static_assert(std::get<4>(attributes).name == std::string_view("iParent"));
+    static_assert(std::get<4>(attributes).ptr == &Parent::iParent);
+
+    static_assert(std::get<5>(attributes).name == std::string_view("ciParent"));
+    static_assert(std::get<5>(attributes).ptr == &Parent::ciParent);
 }
 
 TEST(ReflectionTest, ForEachAttributePointers) {
     constexpr auto test = []() consteval {
         constexpr auto table = putils::make_table(
             "iParent", &Parent::iParent,
+            "ciParent", &Parent::ciParent,
             "i", &Reflectible::i,
-            "s", &Reflectible::s
+            "ci", &Reflectible::ci,
+            "s", &Reflectible::s,
+            "cs", &Reflectible::cs
         );
         int ret = 0;
         putils::reflection::for_each_attribute<Reflectible>([&](const auto & attr) {
@@ -120,7 +145,7 @@ TEST(ReflectionTest, ForEachAttributePointers) {
         });
         return ret;
     };
-    static_assert(test() == 3);
+    static_assert(test() == 6);
 }
 
 TEST(ReflectionTest, ForEachAttributeReferences) {
@@ -128,8 +153,11 @@ TEST(ReflectionTest, ForEachAttributeReferences) {
         const Reflectible obj;
         const auto table = putils::make_table(
             "iParent", &obj.iParent,
+            "ciParent", &obj.ciParent,
             "i", &obj.i,
-            "s", &obj.s
+            "ci", &obj.ci,
+            "s", &obj.s,
+            "cs", &obj.cs
         );
         int ret = 0;
         putils::reflection::for_each_attribute(obj, [&](const auto & attr) {
@@ -138,8 +166,77 @@ TEST(ReflectionTest, ForEachAttributeReferences) {
         });
         return ret;
     };
-    static_assert(test() == 3);
+    static_assert(test() == 6);
     SUCCEED();
+}
+
+TEST(ReflectionTest, GetAttributePointer) {
+    using Wrapped = putils::detail::MemberTypeWrapper<decltype(&Reflectible::iParent)>::type;
+    static_assert(std::is_same<Wrapped, int>());
+
+    constexpr auto iParentAttr = putils::reflection::get_attribute<int, Reflectible>("iParent");
+    static_assert(*iParentAttr == &Reflectible::iParent);
+
+    // TODO: I'd prefer not have to specify the second const here
+    constexpr auto ciParentAttr = putils::reflection::get_attribute<const int, Reflectible>("ciParent");
+    static_assert(*ciParentAttr == &Reflectible::ciParent);
+
+    constexpr auto iAttr = putils::reflection::get_attribute<int, Reflectible>("i");
+    static_assert(*iAttr == &Reflectible::i);
+
+    // TODO: I'd prefer not have to specify the second const here
+    constexpr auto ciAttr = putils::reflection::get_attribute<const int, Reflectible>("ci");
+    static_assert(*ciAttr == &Reflectible::ci);
+
+    constexpr auto sAttr = putils::reflection::get_attribute<const char *, Reflectible>("s");
+    static_assert(*sAttr == &Reflectible::s);
+
+    // TODO: I'd prefer not have to specify the second const here
+    constexpr auto csAttr = putils::reflection::get_attribute<const char * const, Reflectible>("cs");
+    static_assert(*csAttr == &Reflectible::cs);
+}
+
+TEST(ReflectionTest, GetMissingAttributePointer) {
+    constexpr auto attr = putils::reflection::get_attribute<int, Reflectible>("foo");
+    static_assert(attr == std::nullopt);
+}
+
+TEST(ReflectionTest, GetAttributeReference) {
+    constexpr Reflectible obj;
+
+    constexpr auto iParentAttr = putils::reflection::get_attribute<int>(obj, "iParent");
+    static_assert(iParentAttr == &obj.iParent);
+
+    constexpr auto ciParentAttr = putils::reflection::get_attribute<const int>(obj, "ciParent");
+    static_assert(ciParentAttr == &obj.ciParent);
+
+    constexpr auto iAttr = putils::reflection::get_attribute<int>(obj, "i");
+    static_assert(iAttr == &obj.i);
+
+    constexpr auto ciAttr = putils::reflection::get_attribute<const int>(obj, "ci");
+    static_assert(ciAttr == &obj.ci);
+
+    constexpr auto sAttr = putils::reflection::get_attribute<const char *>(obj, "s");
+    static_assert(sAttr == &obj.s);
+
+    // TODO: I'd prefer not have to specify the second const here
+    constexpr auto csAttr = putils::reflection::get_attribute<const char * const>(obj, "cs");
+    static_assert(csAttr == &obj.cs);
+
+    Reflectible obj2;
+    const auto attr = putils::reflection::get_attribute<int>(obj2, "iParent");
+    *attr = -1;
+    EXPECT_EQ(obj2.iParent, -1);
+
+    // TODO: I'd prefer not have to specify the const here
+    const auto cattr = putils::reflection::get_attribute<const int>(obj2, "ci");
+    EXPECT_EQ(cattr, &obj2.ci);
+}
+
+TEST(ReflectionTest, GetMissingAttributeReference) {
+    constexpr Reflectible obj;
+    constexpr auto attr = putils::reflection::get_attribute<int>(obj, "foo");
+    static_assert(attr == nullptr);
 }
 
 /*
@@ -160,29 +257,39 @@ TEST(ReflectionTest, MethodsSize) {
     {
         constexpr auto & methods = putils::reflection::get_methods<Parent>();
         constexpr auto size = std::tuple_size<putils_typeof(methods)>();
-        static_assert(size == 1);
+        static_assert(size == 2);
     }
     {
         constexpr auto & methods = putils::reflection::get_methods<Reflectible>();
         constexpr auto size = std::tuple_size<putils_typeof(methods)>();
-        static_assert(size == 2);
+        static_assert(size == 4);
     }
     SUCCEED();
 }
 
 TEST(ReflectionTest, GetMethods) {
     constexpr auto methods = putils::reflection::get_methods<Reflectible>();
+
     static_assert(std::get<0>(methods).name == std::string_view("f"));
     static_assert(std::get<0>(methods).ptr == &Reflectible::f);
-    static_assert(std::get<1>(methods).name == std::string_view("fParent"));
-    static_assert(std::get<1>(methods).ptr == &Parent::fParent);
+
+    static_assert(std::get<1>(methods).name == std::string_view("cf"));
+    static_assert(std::get<1>(methods).ptr == &Reflectible::cf);
+
+    static_assert(std::get<2>(methods).name == std::string_view("fParent"));
+    static_assert(std::get<2>(methods).ptr == &Parent::fParent);
+
+    static_assert(std::get<3>(methods).name == std::string_view("cfParent"));
+    static_assert(std::get<3>(methods).ptr == &Parent::cfParent);
 }
 
 TEST(ReflectionTest, ForEachMethodPointers) {
     constexpr auto test = []() consteval {
         constexpr auto table = putils::make_table(
             "fParent", &Parent::fParent,
-            "f", &Reflectible::f
+            "cfParent", &Parent::cfParent,
+            "f", &Reflectible::f,
+            "cf", &Reflectible::cf
         );
         int ret = 0;
         putils::reflection::for_each_method<Reflectible>([&](const auto & attr) {
@@ -192,21 +299,94 @@ TEST(ReflectionTest, ForEachMethodPointers) {
         });
         return ret;
     };
-    static_assert(test() == 2);
+    static_assert(test() == 4);
 }
 
 TEST(ReflectionTest, ForEachMethodReferences) {
     auto table = putils::make_table(
         "fParent", (double)0,
-        "f", (double)0
+        "cfParent", (double)0,
+        "f", (double)0,
+        "cf", (double)0
     );
-    const Reflectible obj;
+    Reflectible obj;
     putils::reflection::for_each_method(obj, [&](const auto & attr) {
-        *putils::get_value<double>(table, attr.name) = attr.method(42);
+        *putils::get_value<double>(table, attr.name) = attr.method(0);
     });
-    EXPECT_EQ(std::get<0>(table).second, 42 + 84);
-    EXPECT_EQ(std::get<1>(table).second, 42 + 42);
+    EXPECT_EQ(std::get<0>(table).second, obj.fParent(0));
+    EXPECT_EQ(std::get<1>(table).second, obj.cfParent(0));
+    EXPECT_EQ(std::get<2>(table).second, obj.f(0));
+    EXPECT_EQ(std::get<3>(table).second, obj.cf(0));
     SUCCEED();
+}
+
+TEST(ReflectionTest, GetMethodConstexprPointer) {
+    constexpr auto fParentMethod = putils::reflection::get_method<int(double), Parent>("fParent");
+    static_assert(fParentMethod != std::nullopt);
+    static_assert(*fParentMethod == &Reflectible::fParent);
+
+    // TODO: I'd prefer not have to cast here, and have get_method return the const qualified member pointer
+    constexpr auto cfParentMethod = putils::reflection::get_method<int(double), Parent>("cfParent");
+    static_assert(cfParentMethod != std::nullopt);
+    static_assert(*cfParentMethod == (int (Reflectible::*)(double))&Reflectible::cfParent);
+
+    constexpr auto fMethod = putils::reflection::get_method<int(double), Reflectible>("f");
+    static_assert(fMethod != std::nullopt);
+    static_assert(*fMethod == &Reflectible::f);
+
+    // TODO: I'd prefer not have to cast here, and have get_method return the const qualified member pointer
+    constexpr auto cfMethod = putils::reflection::get_method<int(double), Reflectible>("cf");
+    static_assert(cfMethod != std::nullopt);
+    static_assert(*cfMethod == (int (Reflectible::*)(double))&Reflectible::cf);
+}
+
+TEST(ReflectionTest, GetMissingMethodConstexprPointer) {
+    constexpr auto method = putils::reflection::get_method<int(double), Reflectible>("foo");
+    static_assert(method == std::nullopt);
+}
+
+TEST(ReflectionTest, GetMethodPointer) {
+    const auto fParentMethod = putils::reflection::get_method<int(double), Reflectible>("fParent");
+    EXPECT_EQ(*fParentMethod, &Reflectible::fParent);
+
+    // TODO: I'd prefer not have to cast here, and have get_method return the const qualified member pointer
+    const auto cfParentMethod = putils::reflection::get_method<int(double), Reflectible>("cfParent");
+    EXPECT_EQ(*cfParentMethod, (int (Reflectible::*)(double))&Reflectible::cfParent);
+
+    const auto fMethod = putils::reflection::get_method<int(double), Reflectible>("f");
+    EXPECT_EQ(*fMethod, &Reflectible::f);
+
+    // TODO: I'd prefer not have to cast here, and have get_method return the const qualified member pointer
+    const auto cfMethod = putils::reflection::get_method<int(double), Reflectible>("cf");
+    EXPECT_EQ(*cfMethod, (int (Reflectible::*)(double))&Reflectible::cf);
+}
+
+TEST(ReflectionTest, GetMissingMethodPointer) {
+    const auto method = putils::reflection::get_method<int(), Reflectible>("foo");
+    EXPECT_EQ(method, std::nullopt);
+}
+
+TEST(ReflectionTest, GetMethodReference) {
+    static constexpr Reflectible cobj;
+    Reflectible obj;
+
+    const auto fParentMethod = putils::reflection::get_method<int(double)>(obj, "fParent");
+    EXPECT_EQ((*fParentMethod)(42), obj.fParent(42));
+
+    static constexpr auto cfParentMethod = putils::reflection::get_method<int(double)>(cobj, "cfParent");
+    static_assert((*cfParentMethod)(42) == cobj.cfParent(42));
+
+    const auto fMethod = putils::reflection::get_method<int(double)>(obj, "f");
+    EXPECT_EQ((*fMethod)(42), obj.f(42));
+
+    static constexpr auto cfMethod = putils::reflection::get_method<int(double)>(cobj, "cf");
+    static_assert((*cfMethod)(42) == cobj.cf(42));
+}
+
+TEST(ReflectionTest, GetMissingMethodReference) {
+    static constexpr Reflectible obj;
+    static constexpr auto method = putils::reflection::get_method<int(double)>(obj, "foo");
+    static_assert(method == std::nullopt);
 }
 
 /*
