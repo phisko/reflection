@@ -62,17 +62,17 @@ putils_reflection_info{
  * Class name
  */
 
-TEST(ReflectionTest, HasClassNameTrue) {
+TEST(reflection, has_class_name_true) {
     static_assert(putils::reflection::has_class_name<Reflectible>());
     SUCCEED();
 }
 
-TEST(ReflectionTest, HasClassNameFalse) {
+TEST(reflection, has_class_name_false) {
     static_assert(!putils::reflection::has_class_name<int>());
     SUCCEED();
 }
 
-TEST(ReflectionTest, GetClassName) {
+TEST(reflection, get_class_name) {
     static_assert(putils::reflection::get_class_name<Reflectible>() == std::string_view(putils_nameof(Reflectible)));
     static_assert(putils::reflection::get_class_name<Parent>() == std::string_view(putils_nameof(Parent)));
 }
@@ -81,17 +81,17 @@ TEST(ReflectionTest, GetClassName) {
  * Attributes
  */
 
-TEST(ReflectionTest, HasAttributesTrue) {
+TEST(reflection, has_attributes_true) {
     static_assert(putils::reflection::has_attributes<Reflectible>());
     SUCCEED();
 }
 
-TEST(ReflectionTest, HasAttributesFalse) {
+TEST(reflection, has_attributes_false) {
     static_assert(!putils::reflection::has_attributes<int>());
     SUCCEED();
 }
 
-TEST(ReflectionTest, AttributesSize) {
+TEST(reflection, attributes_size) {
     {
         constexpr auto & attributes = putils::reflection::get_attributes<Parent>();
         constexpr auto size = std::tuple_size<putils_typeof(attributes)>();
@@ -105,7 +105,7 @@ TEST(ReflectionTest, AttributesSize) {
     SUCCEED();
 }
 
-TEST(ReflectionTest, GetAttributes) {
+TEST(reflection, get_attributes) {
     constexpr auto attributes = putils::reflection::get_attributes<Reflectible>();
 
     static_assert(std::get<0>(attributes).name == std::string_view("i"));
@@ -127,7 +127,7 @@ TEST(ReflectionTest, GetAttributes) {
     static_assert(std::get<5>(attributes).ptr == &Parent::ciParent);
 }
 
-TEST(ReflectionTest, ForEachAttributePointers) {
+TEST(reflection, for_each_attribute_pointers) {
     constexpr auto test = []() consteval {
         constexpr auto table = putils::make_table(
             "iParent", &Parent::iParent,
@@ -148,7 +148,7 @@ TEST(ReflectionTest, ForEachAttributePointers) {
     static_assert(test() == 6);
 }
 
-TEST(ReflectionTest, ForEachAttributeReferences) {
+TEST(reflection, for_each_attribute_references) {
     const auto test = []() consteval {
         const Reflectible obj;
         const auto table = putils::make_table(
@@ -170,7 +170,7 @@ TEST(ReflectionTest, ForEachAttributeReferences) {
     SUCCEED();
 }
 
-TEST(ReflectionTest, GetAttributePointer) {
+TEST(reflection, get_attribute_pointer) {
     using Wrapped = putils::detail::MemberTypeWrapper<decltype(&Reflectible::iParent)>::type;
     static_assert(std::is_same<Wrapped, int>());
 
@@ -196,12 +196,12 @@ TEST(ReflectionTest, GetAttributePointer) {
     static_assert(*csAttr == &Reflectible::cs);
 }
 
-TEST(ReflectionTest, GetMissingAttributePointer) {
+TEST(reflection, get_attribute_pointer_missing) {
     constexpr auto attr = putils::reflection::get_attribute<int, Reflectible>("foo");
     static_assert(attr == std::nullopt);
 }
 
-TEST(ReflectionTest, GetAttributeReference) {
+TEST(reflection, get_attribute_reference) {
     static constexpr Reflectible obj;
 
     constexpr auto iParentAttr = putils::reflection::get_attribute<int>(obj, "iParent");
@@ -233,7 +233,7 @@ TEST(ReflectionTest, GetAttributeReference) {
     EXPECT_EQ(cattr, &obj2.ci);
 }
 
-TEST(ReflectionTest, GetMissingAttributeReference) {
+TEST(reflection, get_attribute_reference_missing) {
     constexpr Reflectible obj;
     constexpr auto attr = putils::reflection::get_attribute<int>(obj, "foo");
     static_assert(attr == nullptr);
@@ -243,17 +243,17 @@ TEST(ReflectionTest, GetMissingAttributeReference) {
  * Methods
  */
 
-TEST(ReflectionTest, HasMethodsTrue) {
+TEST(reflection, has_methods_true) {
     static_assert(putils::reflection::has_methods<Reflectible>());
     SUCCEED();
 }
 
-TEST(ReflectionTest, HasMethodsFalse) {
+TEST(reflection, has_methods_false) {
     static_assert(!putils::reflection::has_methods<int>());
     SUCCEED();
 }
 
-TEST(ReflectionTest, MethodsSize) {
+TEST(reflection, methods_size) {
     {
         constexpr auto & methods = putils::reflection::get_methods<Parent>();
         constexpr auto size = std::tuple_size<putils_typeof(methods)>();
@@ -267,7 +267,7 @@ TEST(ReflectionTest, MethodsSize) {
     SUCCEED();
 }
 
-TEST(ReflectionTest, GetMethods) {
+TEST(reflection, get_methods) {
     constexpr auto methods = putils::reflection::get_methods<Reflectible>();
 
     static_assert(std::get<0>(methods).name == std::string_view("f"));
@@ -283,7 +283,7 @@ TEST(ReflectionTest, GetMethods) {
     static_assert(std::get<3>(methods).ptr == &Parent::cfParent);
 }
 
-TEST(ReflectionTest, ForEachMethodPointers) {
+TEST(reflection, for_each_method_pointers) {
     constexpr auto test = []() consteval {
         constexpr auto table = putils::make_table(
             "fParent", &Parent::fParent,
@@ -302,7 +302,7 @@ TEST(ReflectionTest, ForEachMethodPointers) {
     static_assert(test() == 4);
 }
 
-TEST(ReflectionTest, ForEachMethodReferences) {
+TEST(reflection, for_each_method_references) {
     auto table = putils::make_table(
         "fParent", (double)0,
         "cfParent", (double)0,
@@ -320,7 +320,7 @@ TEST(ReflectionTest, ForEachMethodReferences) {
     SUCCEED();
 }
 
-TEST(ReflectionTest, GetMethodConstexprPointer) {
+TEST(reflection, get_method_constexpr_pointer) {
     constexpr auto fParentMethod = putils::reflection::get_method<int(double), Parent>("fParent");
     static_assert(fParentMethod != std::nullopt);
     static_assert(*fParentMethod == &Reflectible::fParent);
@@ -344,7 +344,7 @@ TEST(ReflectionTest, GetMethodConstexprPointer) {
 #endif
 }
 
-TEST(ReflectionTest, GetMethodFullSignatureConstexprPointer) {
+TEST(reflection, get_method_constexpr_pointer_full_signature) {
     // TODO: I'd prefer not have to specify the noexcept in all these
     // TODO: I'd prefer being able to use Reflectible::* instead of Parent::*
     constexpr auto fParentMethod = putils::reflection::get_method<int (Parent::*)(double) noexcept>("fParent");
@@ -364,12 +364,12 @@ TEST(ReflectionTest, GetMethodFullSignatureConstexprPointer) {
     static_assert(*cfMethod == &Reflectible::cf);
 }
 
-TEST(ReflectionTest, GetMissingMethodConstexprPointer) {
+TEST(reflection, get_method_constexpr_pointer_missing) {
     constexpr auto method = putils::reflection::get_method<int(double), Reflectible>("foo");
     static_assert(method == std::nullopt);
 }
 
-TEST(ReflectionTest, GetMethodPointer) {
+TEST(reflection, get_method_pointer) {
     // TODO: I'd prefer not have to cast here, and have get_method return the const/noexcept qualified member pointer
 
     const auto fParentMethod = putils::reflection::get_method<int(double), Reflectible>("fParent");
@@ -385,12 +385,12 @@ TEST(ReflectionTest, GetMethodPointer) {
     EXPECT_EQ(*cfMethod, (int (Reflectible::*)(double))&Reflectible::cf);
 }
 
-TEST(ReflectionTest, GetMissingMethodPointer) {
+TEST(reflection, get_method_pointer_missing) {
     const auto method = putils::reflection::get_method<int(), Reflectible>("foo");
     EXPECT_EQ(method, std::nullopt);
 }
 
-TEST(ReflectionTest, GetMethodConstexprReference) {
+TEST(reflection, get_method_constexpr_reference) {
     static constexpr Reflectible obj;
 
     static constexpr auto cfParentMethod = putils::reflection::get_method<int (Parent::*)(double) const noexcept>(obj, "cfParent");
@@ -402,7 +402,7 @@ TEST(ReflectionTest, GetMethodConstexprReference) {
     static_assert((*cfMethod)(42) == obj.cf(42));
 }
 
-TEST(ReflectionTest, GetMethodReference) {
+TEST(reflection, get_method_reference) {
     Reflectible obj;
 
     const auto fParentMethod = putils::reflection::get_method<int(double)>(obj, "fParent");
@@ -418,13 +418,13 @@ TEST(ReflectionTest, GetMethodReference) {
     EXPECT_EQ((*cfMethod)(42), obj.cf(42));
 }
 
-TEST(ReflectionTest, GetMissingMethodConstexprReference) {
+TEST(reflection, get_method_constexpr_reference_missing) {
     static constexpr Reflectible obj;
     static constexpr auto method = putils::reflection::get_method<int(double)>(obj, "foo");
     static_assert(method == std::nullopt);
 }
 
-TEST(ReflectionTest, GetMissingMethodReference) {
+TEST(reflection, get_method_reference_missing) {
     const Reflectible obj;
     const auto method = putils::reflection::get_method<int(double)>(obj, "foo");
     EXPECT_EQ(method, std::nullopt);
@@ -434,17 +434,17 @@ TEST(ReflectionTest, GetMissingMethodReference) {
  * Parents
  */
 
-TEST(ReflectionTest, HasParentsTrue) {
+TEST(reflection, has_parents_true) {
     static_assert(putils::reflection::has_parents<Reflectible>());
     SUCCEED();
 }
 
-TEST(ReflectionTest, HasParentsFalse) {
+TEST(reflection, has_parents_false) {
     static_assert(!putils::reflection::has_parents<Parent>());
     SUCCEED();
 }
 
-TEST(ReflectionTest, ParentsSize) {
+TEST(reflection, parents_size) {
     {
         constexpr auto & parents = putils::reflection::get_parents<Parent>();
         constexpr auto size = std::tuple_size<putils_typeof(parents)>();
@@ -458,12 +458,12 @@ TEST(ReflectionTest, ParentsSize) {
     SUCCEED();
 }
 
-TEST(ReflectionTest, GetParents) {
+TEST(reflection, get_parents) {
     constexpr auto parents = putils::reflection::get_parents<Reflectible>();
     static_assert(std::is_same_v<putils_wrapped_type(std::get<0>(parents).type), Parent>);
 }
 
-TEST(ReflectionTest, ForEachParent) {
+TEST(reflection, for_each_parent) {
     putils::reflection::for_each_parent<Reflectible>([](const auto & parent) {
         static_assert(std::is_same_v<putils_wrapped_type(parent.type), Parent>);
     });
@@ -473,17 +473,17 @@ TEST(ReflectionTest, ForEachParent) {
  * Used types
  */
 
-TEST(ReflectionTest, HasUsedTypesTrue) {
+TEST(reflection, has_used_types_true) {
     static_assert(putils::reflection::has_used_types<Reflectible>());
     SUCCEED();
 }
 
-TEST(ReflectionTest, HasUsedTypesFalse) {
+TEST(reflection, has_used_types_false) {
     static_assert(!putils::reflection::has_used_types<int>());
     SUCCEED();
 }
 
-TEST(ReflectionTest, UsedTypesSize) {
+TEST(reflection, used_types_size) {
     {
         constexpr auto & used_types = putils::reflection::get_used_types<Parent>();
         constexpr auto size = std::tuple_size<putils_typeof(used_types)>();
@@ -497,7 +497,7 @@ TEST(ReflectionTest, UsedTypesSize) {
     SUCCEED();
 }
 
-TEST(ReflectionTest, GetUsedTypes) {
+TEST(reflection, get_used_types) {
     {
         constexpr auto types = putils::reflection::get_used_types<Parent>();
         static_assert(std::is_same_v<putils_wrapped_type(std::get<0>(types).type), int>);
@@ -509,7 +509,7 @@ TEST(ReflectionTest, GetUsedTypes) {
     }
 }
 
-TEST(ReflectionTest, ForEachUsedType) {
+TEST(reflection, for_each_used_type) {
     constexpr auto parentTest = []() consteval {
         auto table = putils::make_table(
             putils::meta::type<int>(), false
