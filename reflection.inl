@@ -314,19 +314,66 @@ namespace putils::reflection {
 #pragma endregion
 
 #pragma region metadata
+    template<typename T, typename Key>
+    constexpr bool has_attribute_metadata(std::string_view attribute, Key && key) noexcept {
+        bool ret = false;
+        for_each_attribute<T>([&](const auto & attr) {
+            if (attr.name == attribute) {
+                ret = has_metadata(attr.metadata, FWD(key));
+                return true;
+            }
+            return false;
+        });
+        return ret;
+    }
+
+    template<typename Ret, typename T, typename Key>
+    constexpr const Ret * get_attribute_metadata(std::string_view attribute, Key && key) noexcept {
+        const Ret * ret = nullptr;
+        for_each_attribute<T>([&](const auto & attr) {
+            if (attr.name == attribute) {
+                ret = get_metadata<Ret>(attr.metadata, FWD(key));
+                return true;
+            }
+            return false;
+        });
+        return ret;
+    }
+
+    template<typename T, typename Key>
+    constexpr bool has_method_metadata(std::string_view method, Key && key) noexcept {
+        bool ret = false;
+        for_each_method<T>([&](const auto & attr) {
+            if (attr.name == method) {
+                ret = has_metadata(attr.metadata, FWD(key));
+                return true;
+            }
+            return false;
+        });
+        return ret;
+    }
+
+    template<typename Ret, typename T, typename Key>
+    constexpr const Ret * get_method_metadata(std::string_view method, Key && key) noexcept {
+        const Ret * ret = nullptr;
+        for_each_method<T>([&](const auto & attr) {
+            if (attr.name == method) {
+                ret = get_metadata<Ret>(attr.metadata, FWD(key));
+                return true;
+            }
+            return false;
+        });
+        return ret;
+    }
+
 	template<typename ... Metadata, typename Key>
 	constexpr bool has_metadata(const putils::table<Metadata...> & metadata, Key && key) noexcept {
 		return has_key(metadata, FWD(key));
 	}
 
 	template<typename Ret, typename ... Metadata, typename Key>
-	constexpr const Ret & get_metadata(const putils::table<Metadata...> & metadata, Key && key) noexcept {
+	constexpr const Ret * get_metadata(const putils::table<Metadata...> & metadata, Key && key) noexcept {
 		return get_value<Ret>(metadata, FWD(key));
-	}
-
-	template<typename Ret, typename ... Metadata, typename Key>
-	constexpr const Ret * try_get_metadata(const putils::table<Metadata...> & metadata, Key && key) noexcept {
-		return try_get_value<Ret>(metadata, FWD(key));
 	}
 #pragma endregion
 }

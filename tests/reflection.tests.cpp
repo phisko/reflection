@@ -13,11 +13,11 @@ struct Parent {
 putils_reflection_info{
     putils_reflection_class_name;
     putils_reflection_attributes(
-        putils_reflection_attribute(iParent),
+        putils_reflection_attribute(iParent, putils_reflection_metadata("metaKey", "metaValue")),
         putils_reflection_attribute(ciParent)
     );
     putils_reflection_methods(
-        putils_reflection_attribute(fParent),
+        putils_reflection_attribute(fParent, putils_reflection_metadata("metaKey", "metaValue")),
         putils_reflection_attribute(cfParent)
     );
     putils_reflection_used_types(
@@ -534,4 +534,28 @@ TEST(reflection, for_each_used_type) {
         return std::get<0>(table).second && std::get<1>(table).second;
     };
     static_assert(reflectibleTest());
+}
+
+TEST(reflection, has_attribute_metadata) {
+    static_assert(putils::reflection::has_attribute_metadata<Reflectible>("iParent", "metaKey"));
+    static_assert(!putils::reflection::has_attribute_metadata<Reflectible>("iParent", "badKey"));
+    static_assert(!putils::reflection::has_attribute_metadata<Reflectible>("i", "metaKey"));
+}
+
+TEST(reflection, get_attribute_metadata) {
+    static_assert(*putils::reflection::get_attribute_metadata<const char *, Reflectible>("iParent", "metaKey") == std::string_view("metaValue"));
+    static_assert(putils::reflection::get_attribute_metadata<const char *, Reflectible>("iParent", "badKey") == nullptr);
+    static_assert(putils::reflection::get_attribute_metadata<const char *, Reflectible>("i", "metaKey") == nullptr);
+}
+
+TEST(reflection, has_method_metadata) {
+    static_assert(putils::reflection::has_method_metadata<Reflectible>("fParent", "metaKey"));
+    static_assert(!putils::reflection::has_method_metadata<Reflectible>("fParent", "badKey"));
+    static_assert(!putils::reflection::has_method_metadata<Reflectible>("f", "metaKey"));
+}
+
+TEST(reflection, get_method_metadata) {
+    static_assert(*putils::reflection::get_method_metadata<const char *, Reflectible>("fParent", "metaKey") == std::string_view("metaValue"));
+    static_assert(putils::reflection::get_method_metadata<const char *, Reflectible>("fParent", "badKey") == nullptr);
+    static_assert(putils::reflection::get_method_metadata<const char *, Reflectible>("f", "metaKey") == nullptr);
 }

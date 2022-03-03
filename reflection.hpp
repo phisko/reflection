@@ -101,14 +101,23 @@ namespace putils::reflection {
 	template<typename Signature, typename T>
 	constexpr auto get_method(T && obj, std::string_view name) noexcept;
 
+    template<typename T, typename Key>
+    constexpr bool has_attribute_metadata(std::string_view attribute, Key && key) noexcept;
+
+    template<typename Ret, typename T, typename Key>
+    constexpr const Ret * get_attribute_metadata(std::string_view attribute, Key && key) noexcept;
+
+    template<typename T, typename Key>
+    constexpr bool has_method_metadata(std::string_view method, Key && key) noexcept;
+
+    template<typename Ret, typename T, typename Key>
+    constexpr const Ret * get_method_metadata(std::string_view method, Key && key) noexcept;
+
 	template<typename ... Metadata, typename Key>
 	constexpr bool has_metadata(const putils::table<Metadata...> & metadata, Key && key) noexcept;
 
     template<typename Ret, typename ... Metadata, typename Key>
-    constexpr const Ret & get_metadata(const putils::table<Metadata...> & metadata, Key && key) noexcept;
-	
-    template<typename Ret, typename ... Metadata, typename Key>
-    constexpr const Ret * try_get_metadata(const putils::table<Metadata...> & metadata, Key && key) noexcept;
+    constexpr const Ret * get_metadata(const putils::table<Metadata...> & metadata, Key && key) noexcept;
 }
 
 #include "reflection.inl"
