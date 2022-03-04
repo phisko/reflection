@@ -2,12 +2,15 @@
 #include <tuple>
 #include "reflection.hpp"
 
-struct Parent {
-    int iParent = 84;
-    const int ciParent = -84;
-    int fParent(double d) noexcept { return (int)d + iParent; }
-    constexpr int cfParent(double d) const noexcept { return (int)d - ciParent; }
-};
+namespace {
+    struct Parent {
+        int iParent = 84;
+        const int ciParent = -84;
+
+        int fParent(double d) noexcept { return (int)d + iParent; }
+        constexpr int cfParent(double d) const noexcept { return (int)d - ciParent; }
+    };
+}
 
 #define refltype Parent
 putils_reflection_info{
@@ -26,36 +29,39 @@ putils_reflection_info{
 };
 #undef refltype
 
-struct Reflectible : Parent {
-    int i = 42;
-    const int ci = -42;
-    const char * s = "foo";
-    const char * const cs = "constfoo";
+namespace {
+    struct Reflectible : Parent {
+        int i = 42;
+        const int ci = -42;
+        const char *s = "foo";
+        const char *const cs = "constfoo";
 
-    int f(double d) noexcept { return (int)d + i; }
-    constexpr int cf(double d) const noexcept { return (int)d + ci; }
-};
+        int f(double d) noexcept { return (int)d + i; }
+        constexpr int cf(double d) const noexcept { return (int)d + ci; }
+    };
+}
 
 #define refltype Reflectible
-putils_reflection_info{
-    putils_reflection_class_name;
-    putils_reflection_attributes(
-        putils_reflection_attribute(i),
-        putils_reflection_attribute(ci),
-        putils_reflection_attribute(s),
-        putils_reflection_attribute(cs)
-    );
-    putils_reflection_methods(
-        putils_reflection_attribute(f),
-        putils_reflection_attribute(cf)
-    );
-    putils_reflection_parents(
-        putils_reflection_type(Parent)
-    );
-    putils_reflection_used_types(
-        putils_reflection_type(const char *)
-    );
-};
+    putils_reflection_info
+    {
+        putils_reflection_class_name;
+        putils_reflection_attributes(
+                putils_reflection_attribute(i),
+                putils_reflection_attribute(ci),
+                putils_reflection_attribute(s),
+                putils_reflection_attribute(cs)
+        );
+        putils_reflection_methods(
+                putils_reflection_attribute(f),
+                putils_reflection_attribute(cf)
+        );
+        putils_reflection_parents(
+                putils_reflection_type(Parent)
+        );
+        putils_reflection_used_types(
+                putils_reflection_type(const char *)
+        );
+    };
 #undef refltype
 
 /*
