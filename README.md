@@ -163,6 +163,53 @@ static_assert(putils::reflection::has_parents<Reflectible>());
 static_assert(putils::reflection::has_used_types<Reflectible>());
 ```
 
+## Metadata
+
+Attributes and methods can be annotated with custom metadata like so:
+
+```cpp
+struct WithMetadata {
+    int i = 0;
+    void f() const;
+};
+
+#define refltype WithMetadata
+putils_reflection_info {
+    putils_reflection_attributes(
+        putils_reflection_attribute(i, putils_reflection_metadata("metaKey", "metaValue"))
+    );
+    putils_reflection_methods(
+        putils_reflection_attribute(f, putils_reflection_metadata(42, std::string("value")))
+    );
+};
+#undef refltype
+```
+
+Metadata are key-value pairs, with no specific constraint regarding the types for either the key or the value.
+
+Metadata can then be accessed directly from the `metadata` table in the `attribute_info` returned by `get_attributes`/`get_methods` and iterated on by `for_each_attribute`/`for_each_method`.
+
+They may also be queried and accessed through helper functions:
+```cpp
+template<typename T, typename Key>
+constexpr bool has_attribute_metadata(std::string_view attribute, Key && key) noexcept;
+
+template<typename Ret, typename T, typename Key>
+constexpr const Ret * get_attribute_metadata(std::string_view attribute, Key && key) noexcept;
+
+template<typename T, typename Key>
+constexpr bool has_method_metadata(std::string_view method, Key && key) noexcept;
+
+template<typename Ret, typename T, typename Key>
+constexpr const Ret * get_method_metadata(std::string_view method, Key && key) noexcept;
+
+template<typename ... Metadata, typename Key>
+constexpr bool has_metadata(const putils::table<Metadata...> & metadata, Key && key) noexcept;
+
+template<typename Ret, typename ... Metadata, typename Key>
+constexpr const Ret * get_metadata(const putils::table<Metadata...> & metadata, Key && key) noexcept;
+```
+
 ## API
 
 Making a type reflectible consists in specializing the `putils::reflection::type_info` template with (up to) 5 static members that provide type information.
