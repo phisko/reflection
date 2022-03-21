@@ -376,6 +376,24 @@ namespace putils::reflection {
 
 Lets client code iterate over the types used by a given type.
 
+## Querying attributes
+
+```cpp
+template<typename T, typename Parent>
+constexpr bool has_parent();
+
+template<typename T, typename Used>
+constexpr bool has_used_type();
+
+template<typename T>
+constexpr bool has_attribute(std::string_view name);
+
+template<typename T>
+constexpr bool has_method(std::string_view name);
+```
+
+Returns whether `T` has the specified parent, used type, attribute or method.
+
 ## Getting specific attributes
 
 ### get_attribute

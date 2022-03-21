@@ -56,10 +56,16 @@ namespace putils::reflection {
 	template<typename T, typename Func>
 	constexpr auto for_each_parent(Func && func) noexcept;
 
+    template<typename T, typename Parent>
+    constexpr bool has_parent() noexcept;
+
 	// For each type used by T, get a used_type_info
     // Same behavior as putils::tuple_for_each
 	template<typename T, typename Func>
 	constexpr auto for_each_used_type(Func && func) noexcept;
+
+    template<typename T, typename Used>
+    constexpr bool has_used_type() noexcept;
 
 	// For each attribute in T, get an attribute_info
     // Same behavior as putils::tuple_for_each
@@ -70,6 +76,9 @@ namespace putils::reflection {
     // Same behavior as putils::tuple_for_each
 	template<typename T, typename Func>
 	constexpr auto for_each_attribute(T && obj, Func && func) noexcept;
+
+    template<typename T>
+    constexpr bool has_attribute(std::string_view name) noexcept;
 
 	// Try to find an attribute called "name" and get a member pointer to it, or nullopt
 	template<typename Attribute, typename T>
@@ -88,6 +97,9 @@ namespace putils::reflection {
     // Same behavior as putils::tuple_for_each
 	template<typename T, typename Func>
 	constexpr auto for_each_method(T && obj, Func && func) noexcept;
+
+    template<typename T>
+    constexpr bool has_method(std::string_view name) noexcept;
 
     // Try to find a method called "name" and get an optional functor taking a `T` that calls the method on it
     // `Const` template argument is required when getting pointers to const methods in a constexpr context

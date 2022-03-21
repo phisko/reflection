@@ -176,6 +176,12 @@ TEST(reflection, for_each_attribute_references) {
     SUCCEED();
 }
 
+TEST(reflection, has_attribute) {
+    static_assert(putils::reflection::has_attribute<Parent>("iParent"));
+    static_assert(putils::reflection::has_attribute<Reflectible>("iParent"));
+    static_assert(!putils::reflection::has_attribute<Reflectible>("unknown"));
+}
+
 TEST(reflection, get_attribute_pointer) {
     using Wrapped = putils::detail::MemberTypeWrapper<decltype(&Reflectible::iParent)>::type;
     static_assert(std::is_same<Wrapped, int>());
@@ -324,6 +330,12 @@ TEST(reflection, for_each_method_references) {
     EXPECT_EQ(std::get<2>(table).second, obj.f(0));
     EXPECT_EQ(std::get<3>(table).second, obj.cf(0));
     SUCCEED();
+}
+
+TEST(reflection, has_method) {
+    static_assert(putils::reflection::has_method<Parent>("fParent"));
+    static_assert(putils::reflection::has_method<Reflectible>("fParent"));
+    static_assert(!putils::reflection::has_method<Reflectible>("unknown"));
 }
 
 TEST(reflection, get_method_constexpr_pointer) {
@@ -475,6 +487,11 @@ TEST(reflection, for_each_parent) {
     });
 }
 
+TEST(reflection, has_parent) {
+    static_assert(putils::reflection::has_parent<Reflectible, Parent>());
+    static_assert(!putils::reflection::has_parent<Parent, Parent>());
+}
+
 /*
  * Used types
  */
@@ -541,6 +558,16 @@ TEST(reflection, for_each_used_type) {
     };
     static_assert(reflectibleTest());
 }
+
+TEST(reflection, has_used_type) {
+    static_assert(putils::reflection::has_used_type<Parent, int>());
+    static_assert(putils::reflection::has_used_type<Reflectible, int>());
+    static_assert(!putils::reflection::has_used_type<Reflectible, void *>());
+}
+
+/*
+ * Metadata
+ */
 
 TEST(reflection, has_attribute_metadata) {
     static_assert(putils::reflection::has_attribute_metadata<Reflectible>("iParent", "metaKey"));

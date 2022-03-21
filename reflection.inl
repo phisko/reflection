@@ -180,6 +180,22 @@ namespace putils::reflection {
 	putils_impl_reflection_member_getter_and_for_each(parent);
 	putils_impl_reflection_member_getter_and_for_each(used_type);
 
+    template<typename T, typename Parent>
+    constexpr bool has_parent() noexcept {
+        return for_each_parent<T>([](const auto & parent) {
+            using P = putils_wrapped_type(parent.type);
+            return std::is_same_v<P, Parent>;
+        });
+    }
+
+    template<typename T, typename Used>
+    constexpr bool has_used_type() noexcept {
+        return for_each_used_type<T>([](const auto & used) {
+            using U = putils_wrapped_type(used.type);
+            return std::is_same_v<U, Used>;
+        });
+    }
+
 #pragma region attributes
 	template<typename T, typename Func>
 	constexpr auto for_each_attribute(T && obj, Func && func) noexcept {
@@ -191,6 +207,13 @@ namespace putils::reflection {
 			});
 		});
 	}
+
+    template<typename T>
+    constexpr bool has_attribute(std::string_view name) noexcept {
+        return for_each_attribute<T>([&](const auto & attribute) {
+            return attribute.name == name;
+        });
+    }
 
 	template<typename Attribute, typename T>
 	constexpr std::optional<Attribute T::*> get_attribute(std::string_view name) noexcept {
@@ -225,6 +248,13 @@ namespace putils::reflection {
 			});
 		});
 	}
+
+    template<typename T>
+    constexpr bool has_method(std::string_view name) noexcept {
+        return for_each_method<T>([&](const auto & method) {
+            return method.name == name;
+        });
+    }
 
     namespace detail {
         template<typename Signature, typename T>
