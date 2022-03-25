@@ -64,14 +64,14 @@ Accessing a type's name, attributes, methods and used types is done like so:
 int main() {
     Reflectible obj;
 
-    std::cout << putils::reflection::get_class_name<Reflectible>() << '\n';
+    std::cout << putils::reflection::get_class_name<Reflectible>() << std::endl;
 
     // Obtaining member pointers
     {
         putils::reflection::for_each_attribute<Reflectible>(
             [&](const auto & attr) {
                 assert(attr.ptr == &Reflectible::i);
-                std::cout << attr.name << ": " << obj.*attr.ptr << '\n';
+                std::cout << attr.name << ": " << obj.*attr.ptr << std::endl;
             }
         );
         constexpr auto memberPtr = putils::reflection::get_attribute<int, Reflectible>("i");
@@ -83,7 +83,7 @@ int main() {
         putils::reflection::for_each_attribute(obj,
             [&](const auto & attr) {
                 assert(&attr.member == &obj.i);
-                std::cout << attr.name << ": " << attr.member << '\n';
+                std::cout << attr.name << ": " << attr.member << std::endl;
             }
         );
         const auto attr = putils::reflection::get_attribute<int>(obj, "i");
@@ -94,7 +94,7 @@ int main() {
     putils::reflection::for_each_method<Reflectible>(
         [&](const auto & method) {
             assert(method.ptr == &Reflectible::getValue);
-            std::cout << method.name << ": " << (obj.*method.ptr)() << '\n';
+            std::cout << method.name << ": " << (obj.*method.ptr)() << std::endl;
         }
     );
 
@@ -102,7 +102,7 @@ int main() {
     putils::reflection::for_each_method(obj,
         [](const auto & method) {
             // func is a functor that calls obj.getValue()
-            std::cout << method.name << ": " << method.member() << '\n';
+            std::cout << method.name << ": " << method.member() << std::endl;
         }
     );
 
@@ -110,7 +110,7 @@ int main() {
         [](const auto & type) {
             // type: putils::meta::type<Parent>
             using T = putils_wrapped_type(type.type);
-            std::cout << typeid(T).name() << '\n';
+            std::cout << typeid(T).name() << std::endl;
         }
     );
 
@@ -118,7 +118,7 @@ int main() {
         [](const auto & type) {
             // type: putils::meta::type<int>
             using T = putils_wrapped_type(type.type);
-            std::cout << typeid(T).name() << '\n';
+            std::cout << typeid(T).name() << std::endl;
         }
     );
 
