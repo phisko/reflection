@@ -1,5 +1,8 @@
 # [Reflection](reflection.hpp)
 
+[![gcc](https://github.com/phisko/reflection/workflows/gcc/badge.svg)](https://github.com/phisko/reflection/actions/workflows/gcc.yml)
+[![msvc](https://github.com/phisko/reflection/workflows/msvc/badge.svg)](https://github.com/phisko/reflection/actions/workflows/msvc.yml)
+
 A simple, stand-alone, header-only and easily pluggable reflection system.
 
 This provides an API that you can implement for any type so that you can introspect its attributes, methods, parent types and any types it "uses".
