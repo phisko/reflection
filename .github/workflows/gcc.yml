@@ -22,8 +22,16 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  debug:
     uses: phisko/cmake-cxx-conan/.github/workflows/test.yml@main
     with:
       os: ubuntu-latest
+      configuration: Debug
+      cmake_options: -DPUTILS_REFLECTION_TESTS=ON
+
+  release:
+    uses: phisko/cmake-cxx-conan/.github/workflows/test.yml@main
+    with:
+      os: ubuntu-latest
+      configuration: Release
       cmake_options: -DPUTILS_REFLECTION_TESTS=ON
