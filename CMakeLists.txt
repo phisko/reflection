@@ -16,9 +16,16 @@ if (PUTILS_REFLECTION_TESTS)
     file(GLOB test_src tests/*.tests.cpp)
 
     add_executable(${test_exe_name} ${test_src})
+    target_link_libraries(${test_exe_name} PRIVATE reflection)
 
-    putils_conan(gtest/cci.20210126)
-    target_link_libraries(${test_exe_name} CONAN_PKG::gtest reflection)
+    set(customFindPackageNames gtest:GTest)
+    set(customLibraryNames gtest:GTest)
+    putils_conan_download_and_link_packages_with_names(
+        ${test_exe_name} PRIVATE
+        "${customFindPackageNames}"
+        "${customLibraryNames}"
+        gtest/cci.20210126
+    )
 
     include(GoogleTest)
     gtest_discover_tests(${test_exe_name})
