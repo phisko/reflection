@@ -1,12 +1,15 @@
 #pragma once
 
+// stl
 #include <string_view>
 #include <optional>
-#include "meta/table.hpp"
-
 #include <type_traits>
 #include <utility>
 #include <functional>
+
+// meta
+#include "meta/table.hpp"
+
 
 namespace putils::reflection {
 	template<typename T>
