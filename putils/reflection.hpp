@@ -8,7 +8,7 @@
 #include <functional>
 
 // meta
-#include "meta/table.hpp"
+#include "putils/meta/table.hpp"
 
 
 namespace putils::reflection {
