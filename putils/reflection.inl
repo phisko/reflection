@@ -4,11 +4,11 @@
 #include <string_view>
 
 // meta
-#include "meta/nameof.hpp"
-#include "meta/for_each.hpp"
-#include "meta/members.hpp"
-#include "meta/traits/has_member.hpp"
-#include "meta/traits/member_function_signature.hpp"
+#include "putils/meta/nameof.hpp"
+#include "putils/meta/for_each.hpp"
+#include "putils/meta/members.hpp"
+#include "putils/meta/traits/has_member.hpp"
+#include "putils/meta/traits/member_function_signature.hpp"
 
 // Define a type_info for a templated type, like C in the example above
 #define putils_reflection_info_template struct putils::reflection::type_info<refltype>
@@ -23,7 +23,7 @@
 #define putils_impl_reflection_static_tuple(NAME, ...) static constexpr auto NAME = std::make_tuple(__VA_ARGS__);
 
 // Lets you define a custom class name
-#define putils_reflection_custom_class_name(className) static constexpr auto class_name = putils_nameof(className) + (std::string_view(putils_nameof(className)).rfind("::") != std::string_view::npos ? std::string_view(putils_nameof(className)).rfind("::") + 2 : 0);
+#define putils_reflection_custom_class_name(custom_class_name) static constexpr auto class_name = putils_nameof(custom_class_name) + (std::string_view(putils_nameof(custom_class_name)).rfind("::") != std::string_view::npos ? std::string_view(putils_nameof(custom_class_name)).rfind("::") + 2 : 0);
 
 // Uses refltype as class name
 #define putils_reflection_class_name putils_reflection_custom_class_name(refltype)
@@ -39,13 +39,10 @@
 #define putils_reflection_type(T, ...) putils::reflection::used_type_info{ .type = putils::meta::type<T>(), .metadata = putils::make_table(__VA_ARGS__) }
 
 namespace putils::reflection {
-
-#pragma region impl
 	namespace detail {
-		inline static const auto emptyTuple = std::tuple<>();
+		inline static const auto empty_tuple = std::tuple<>();
 	}
 
-#pragma region macros
 #define putils_impl_reflection_member_detector(NAME) \
 	namespace detail {\
 		putils_member_detector(NAME);\
@@ -64,8 +61,8 @@ namespace putils::reflection {
 		if constexpr (detail::has_member_##NAME<type_info<T>>())\
 			return true;\
 		return for_each_parent<T>([](const auto & parent) noexcept -> bool {\
-			using Parent = putils_wrapped_type(parent.type);\
-			if constexpr (detail::has_member_##NAME<type_info<Parent>>())  \
+			using parent = putils_wrapped_type(parent.type);\
+			if constexpr (detail::has_member_##NAME<type_info<parent>>())  \
                 return true;\
             return false;\
 		});\
@@ -97,11 +94,9 @@ namespace putils::reflection {
 			return get_all_##NAME<T, Parents...>();\
 		}\
 	}
-#pragma endregion
 
-#pragma region parents
 	putils_impl_reflection_member_detector(parents);
-	putils_impl_reflection_member_get_single(parents, detail::emptyTuple);
+	putils_impl_reflection_member_get_single(parents, detail::empty_tuple);
 	namespace detail {
 		template<typename T>
 		constexpr auto get_all_parents() noexcept;
@@ -119,16 +114,13 @@ namespace putils::reflection {
 				return get_single_parents<T>();
 		}
 	}
-#pragma endregion
 
-#pragma region class_name
 	putils_impl_reflection_member_detector(class_name);
 	putils_impl_reflection_member_get_single(class_name, typeid(T).name());
-#pragma endregion
 
 #define putils_impl_reflection_member(NAME) \
 	putils_impl_reflection_member_detector_with_parents(NAME) \
-	putils_impl_reflection_member_get_single(NAME, detail::emptyTuple) \
+	putils_impl_reflection_member_get_single(NAME, detail::empty_tuple) \
 	putils_impl_reflection_member_get_all(NAME)
 
 	putils_impl_reflection_member(attributes);
@@ -145,8 +137,6 @@ namespace putils::reflection {
 			static constexpr auto used_types = get_all_used_types<T>(parents);
 		};
 	}
-
-#pragma endregion
 
 	template<typename T>
 	constexpr auto get_class_name() noexcept {
@@ -185,27 +175,26 @@ namespace putils::reflection {
     template<typename T, typename Parent>
     constexpr bool has_parent() noexcept {
         return for_each_parent<T>([](const auto & parent) {
-            using P = putils_wrapped_type(parent.type);
-            return std::is_same_v<P, Parent>;
+            using p = putils_wrapped_type(parent.type);
+            return std::is_same_v<p, Parent>;
         });
     }
 
     template<typename T, typename Used>
     constexpr bool has_used_type() noexcept {
         return for_each_used_type<T>([](const auto & used) {
-            using U = putils_wrapped_type(used.type);
-            return std::is_same_v<U, Used>;
+            using u = putils_wrapped_type(used.type);
+            return std::is_same_v<u, Used>;
         });
     }
 
-#pragma region attributes
 	template<typename T, typename Func>
 	constexpr auto for_each_attribute(T && obj, Func && func) noexcept {
-		return for_each_attribute<std::decay_t<T>>([&](const auto & attrInfo) noexcept {
+		return for_each_attribute<std::decay_t<T>>([&](const auto & attr) noexcept {
 			return func(object_attribute_info{
-				.name = attrInfo.name,
-				.member = obj.*attrInfo.ptr,
-				.metadata = attrInfo.metadata
+				.name = attr.name,
+				.member = obj.*attr.ptr,
+				.metadata = attr.metadata
 			});
 		});
 	}
@@ -220,7 +209,7 @@ namespace putils::reflection {
 	template<typename Attribute, typename T>
 	constexpr std::optional<Attribute T::*> get_attribute(std::string_view name) noexcept {
 		return for_each_attribute<T>([&](const auto & attr) noexcept -> std::optional<Attribute T::*> {
-			if constexpr (std::is_same<putils::MemberType<putils_typeof(attr.ptr)>, Attribute>()) {
+			if constexpr (std::is_same<putils::member_type<putils_typeof(attr.ptr)>, Attribute>()) {
 				if (name == attr.name)
 					return (Attribute T::*)attr.ptr;
 			}
@@ -232,21 +221,19 @@ namespace putils::reflection {
 	constexpr auto get_attribute(T && obj, std::string_view name) noexcept {
 		const auto member = get_attribute<Attribute, std::decay_t<T>>(name);
 
-        using ReturnType = decltype(&(obj.*(*member)));
+        using return_type = decltype(&(obj.*(*member)));
 		if (!member)
-			return ReturnType(nullptr);
+			return return_type(nullptr);
 		return &(obj.*(*member));
 	}
-#pragma endregion
 
-#pragma region methods
 	template<typename T, typename Func>
 	constexpr auto for_each_method(T && obj, Func && func) noexcept {
-		return for_each_method<std::decay_t<T>>([&](const auto & attrInfo) noexcept {
+		return for_each_method<std::decay_t<T>>([&](const auto & attr) noexcept {
 			return func(object_method_info{
-				.name = attrInfo.name,
-				.method = [&](auto && ... args) { return (obj.*attrInfo.ptr)(FWD(args)...); },
-				.metadata = attrInfo.metadata
+				.name = attr.name,
+				.method = [&](auto && ... args) { return (obj.*attr.ptr)(FWD(args)...); },
+				.metadata = attr.metadata
 			});
 		});
 	}
@@ -321,31 +308,29 @@ namespace putils::reflection {
 
 	template<typename Signature, typename T>
 	constexpr auto get_method(T && obj, std::string_view name) noexcept {
-        const auto callMethod = [&](const auto method) {
+        const auto call_method = [&](const auto method) {
             const auto ret = [&obj, method](auto && ... args) noexcept {
                 const auto ptr = *method;
                 auto & decayed = (std::decay_t<T> &)obj; // method might have lost its qualifier
                 return (decayed.*ptr)(FWD(args)...);
             };
 
-            using ReturnType = std::optional<decltype(ret)>;
+            using return_type = std::optional<decltype(ret)>;
             if (!method)
-                return ReturnType(std::nullopt);
-            return ReturnType(ret);
+                return return_type(std::nullopt);
+            return return_type(ret);
         };
 
         if constexpr (std::is_member_function_pointer_v<Signature> ) {
             const auto method = get_method<Signature>(name);
-            return callMethod(method);
+            return call_method(method);
         }
         else {
             const auto method = get_method<Signature, std::decay_t<T>>(name);
-            return callMethod(method);
+            return call_method(method);
         }
 	}
-#pragma endregion
 
-#pragma region metadata
     template<typename T, typename Key>
     constexpr bool has_attribute_metadata(std::string_view attribute, Key && key) noexcept {
         bool ret = false;
@@ -407,5 +392,4 @@ namespace putils::reflection {
 	constexpr const Ret * get_metadata(const putils::table<Metadata...> & metadata, Key && key) noexcept {
 		return get_value<Ret>(metadata, FWD(key));
 	}
-#pragma endregion
 }

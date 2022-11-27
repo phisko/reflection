@@ -8,7 +8,7 @@ This provides an API that you can implement for any type so that you can introsp
 
 The "used types" concept can refer to anything really, but one interesting use case is when registering a type with scripting languages. If you're going to be accessing a type's attributes through a scripting language, chances are you also want to register those attributes' types.
 
-An example use case for this API is the registerType function provided for [Lua](https://github.com/phisko/putils/blob/master/lua/lua_helper.hpp#L80) and [Python](https://github.com/phisko/putils/blob/master/python/python_helper.inl) in my putils library, that inspects a type and registers all its attributes and methods to the scripting language.
+An example use case for this API is the register_type function provided for [Lua](https://github.com/phisko/putils/blob/master/lua/lua_helper.hpp#L80) and [Python](https://github.com/phisko/putils/blob/master/python/python_helper.inl) in my putils library, that inspects a type and registers all its attributes and methods to the scripting language.
 
 ## Overview
 
@@ -20,7 +20,7 @@ struct Parent {};
 struct Reflectible : Parent {
     int i = 0;
 
-    int getValue() const { return i; }
+    int get_value() const { return i; }
 };
 
 #define refltype Reflectible
@@ -30,7 +30,7 @@ putils_reflection_info {
         putils_reflection_attribute(i)
     );
     putils_reflection_methods(
-        putils_reflection_attribute(getValue)
+        putils_reflection_attribute(get_value)
     );
     putils_reflection_parents(
         putils_reflection_type(Parent)
@@ -95,7 +95,7 @@ int main() {
     // Obtaining member function pointers
     putils::reflection::for_each_method<Reflectible>(
         [&](const auto & method) {
-            assert(method.ptr == &Reflectible::getValue);
+            assert(method.ptr == &Reflectible::get_value);
             std::cout << method.name << ": " << (obj.*method.ptr)() << std::endl;
         }
     );
@@ -103,7 +103,7 @@ int main() {
     // Obtaining functors to call the method on a given object
     putils::reflection::for_each_method(obj,
         [](const auto & method) {
-            // func is a functor that calls obj.getValue()
+            // func is a functor that calls obj.get_value()
             std::cout << method.name << ": " << method.member() << std::endl;
         }
     );
@@ -239,7 +239,7 @@ struct putils::reflection::type_info<Reflectible> {
         std::make_pair("i", &Reflectible::i)
     );
     static constexpr auto methods = std::make_tuple(
-        std::make_pair("getValue", &Reflectible::getValue)
+        std::make_pair("get_value", &Reflectible::get_value)
     );
     static constexpr auto parents = std::make_tuple(
         putils::meta::type<Parent>{}
@@ -486,15 +486,15 @@ Takes the name of an attribute as parameter and generates of pair of parameters 
 
 ```cpp
 const auto table = putils::make_table(
-    "x", &Point::x,
-    "y", &Point::y
+    "x", &point::x,
+    "y", &point::y
 );
 ```
 
 can be refactored to:
 
 ```cpp
-#define refltype Point
+#define refltype point
 const auto table = putils::make_table(
     putils_reflection_attribute(x),
     putils_reflection_attribute(y)
