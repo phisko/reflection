@@ -15,15 +15,15 @@ An example use case for this API is the register_type function provided for [Lua
 Making a type reflectible is done like so:
 
 ```cpp
-struct Parent {};
+struct parent {};
 
-struct Reflectible : Parent {
+struct reflectible : parent {
     int i = 0;
 
     int get_value() const { return i; }
 };
 
-#define refltype Reflectible
+#define refltype reflectible
 putils_reflection_info {
     putils_reflection_class_name;
     putils_reflection_attributes(
@@ -33,7 +33,7 @@ putils_reflection_info {
         putils_reflection_attribute(get_value)
     );
     putils_reflection_parents(
-        putils_reflection_type(Parent)
+        putils_reflection_type(parent)
     );
     putils_reflection_used_types(
         putils_reflection_type(int)
@@ -45,12 +45,12 @@ putils_reflection_info {
 Note that all the information does not need to be present. For instance, for a type with only two attributes, and for which we don't want to expose the class name:
 
 ```cpp
-struct Simple {
+struct simple {
     int i = 0;
     double d = 0;
 };
 
-#define refltype Simple
+#define refltype simple
 putils_reflection_info {
     putils_reflection_attributes(
         putils_reflection_attribute(i),
@@ -64,20 +64,20 @@ Accessing a type's name, attributes, methods and used types is done like so:
 
 ```cpp
 int main() {
-    Reflectible obj;
+    reflectible obj;
 
-    std::cout << putils::reflection::get_class_name<Reflectible>() << std::endl;
+    std::cout << putils::reflection::get_class_name<reflectible>() << std::endl;
 
     // Obtaining member pointers
     {
-        putils::reflection::for_each_attribute<Reflectible>(
+        putils::reflection::for_each_attribute<reflectible>(
             [&](const auto & attr) {
-                assert(attr.ptr == &Reflectible::i);
+                assert(attr.ptr == &reflectible::i);
                 std::cout << attr.name << ": " << obj.*attr.ptr << std::endl;
             }
         );
-        constexpr auto memberPtr = putils::reflection::get_attribute<int, Reflectible>("i");
-        static_assert(memberPtr == &Reflectible::i);
+        constexpr auto member_ptr = putils::reflection::get_attribute<int, reflectible>("i");
+        static_assert(member_ptr == &reflectible::i);
     }
 
     // Obtaining attributes of a specific object
@@ -93,9 +93,9 @@ int main() {
     }
 
     // Obtaining member function pointers
-    putils::reflection::for_each_method<Reflectible>(
+    putils::reflection::for_each_method<reflectible>(
         [&](const auto & method) {
-            assert(method.ptr == &Reflectible::get_value);
+            assert(method.ptr == &reflectible::get_value);
             std::cout << method.name << ": " << (obj.*method.ptr)() << std::endl;
         }
     );
@@ -108,15 +108,15 @@ int main() {
         }
     );
 
-    putils::reflection::for_each_parent<Reflectible>(
+    putils::reflection::for_each_parent<reflectible>(
         [](const auto & type) {
-            // type: putils::meta::type<Parent>
+            // type: putils::meta::type<parent>
             using T = putils_wrapped_type(type.type);
             std::cout << typeid(T).name() << std::endl;
         }
     );
 
-    putils::reflection::for_each_used_type<Reflectible>(
+    putils::reflection::for_each_used_type<reflectible>(
         [](const auto & type) {
             // type: putils::meta::type<int>
             using T = putils_wrapped_type(type.type);
@@ -131,20 +131,20 @@ int main() {
 All these operations can also be done at compile-time:
 
 ```cpp
-constexpr Reflectible obj;
+constexpr reflectible obj;
 
-constexpr auto & attributes = putils::reflection::get_attributes<Reflectible>();
-using ExpectedType = std::tuple<std::pair<const char *, int Reflectible:: *>>;
-static_assert(std::is_same_v<std::decay_t<decltype(attributes)>, ExpectedType>);
-static_assert(std::get<0>(attributes).second == &Reflectible::i);
+constexpr auto & attributes = putils::reflection::get_attributes<reflectible>();
+using expected_type = std::tuple<std::pair<const char *, int reflectible:: *>>;
+static_assert(std::is_same_v<std::decay_t<decltype(attributes)>, expected_type>);
+static_assert(std::get<0>(attributes).second == &reflectible::i);
 
 constexpr auto attr = putils::reflection::get_attribute<int>(obj, "i");
 static_assert(attr == &obj.i);
 static_assert(*attr == 0);
 
-constexpr size_t countAttributes() {
+constexpr size_t count_attributes() {
     size_t ret = 0;
-    putils::reflection::for_each_attribute<Reflectible>(
+    putils::reflection::for_each_attribute<reflectible>(
         [&](const auto & attr) {
             ++ret;
         }
@@ -152,17 +152,17 @@ constexpr size_t countAttributes() {
     return ret;
 }
 
-static_assert(countAttributes() == 1);
+static_assert(count_attributes() == 1);
 ```
 
 Functions are also provided to check if a type exposes a given property:
 
 ```cpp
-static_assert(putils::reflection::has_class_name<Reflectible>());
-static_assert(putils::reflection::has_attributes<Reflectible>());
-static_assert(putils::reflection::has_methods<Reflectible>());
-static_assert(putils::reflection::has_parents<Reflectible>());
-static_assert(putils::reflection::has_used_types<Reflectible>());
+static_assert(putils::reflection::has_class_name<reflectible>());
+static_assert(putils::reflection::has_attributes<reflectible>());
+static_assert(putils::reflection::has_methods<reflectible>());
+static_assert(putils::reflection::has_parents<reflectible>());
+static_assert(putils::reflection::has_used_types<reflectible>());
 ```
 
 ## Metadata
@@ -170,15 +170,15 @@ static_assert(putils::reflection::has_used_types<Reflectible>());
 Attributes and methods can be annotated with custom metadata like so:
 
 ```cpp
-struct WithMetadata {
+struct with_metadata {
     int i = 0;
     void f() const;
 };
 
-#define refltype WithMetadata
+#define refltype with_metadata
 putils_reflection_info {
     putils_reflection_attributes(
-        putils_reflection_attribute(i, putils_reflection_metadata("metaKey", "metaValue"))
+        putils_reflection_attribute(i, putils_reflection_metadata("meta_key", "meta_value"))
     );
     putils_reflection_methods(
         putils_reflection_attribute(f, putils_reflection_metadata(42, std::string("value")))
@@ -221,28 +221,28 @@ namespace putils::reflection {
 	template<typename T>
 	struct type_info {
 		static constexpr auto class_name = const char *;
-		static constexpr auto attributes = std::tuple<std::pair<const char *, MemberPointer>...>;
-		static constexpr auto methods = std::tuple<std::pair<const char *, MemberPointer>...>;
-		static constexpr auto parents = std::tuple<putils::meta::type<Parent>...>;
-		static constexpr auto used_types = std::tuple<putils::meta::type<UsedType>...>;
+		static constexpr auto attributes = std::tuple<std::pair<const char *, member_pointer>...>;
+		static constexpr auto methods = std::tuple<std::pair<const char *, member_pointer>...>;
+		static constexpr auto parents = std::tuple<putils::meta::type<parent>...>;
+		static constexpr auto used_types = std::tuple<putils::meta::type<used_type>...>;
 	};
 }
 ```
 
-For instance, for the `Reflectible` struct given as an example above:
+For instance, for the `reflectible` struct given as an example above:
 
 ```cpp
 template<>
-struct putils::reflection::type_info<Reflectible> {
-    static constexpr auto class_name = "Reflectible";
+struct putils::reflection::type_info<reflectible> {
+    static constexpr auto class_name = "reflectible";
     static constexpr auto attributes = std::make_tuple(
-        std::make_pair("i", &Reflectible::i)
+        std::make_pair("i", &reflectible::i)
     );
     static constexpr auto methods = std::make_tuple(
-        std::make_pair("get_value", &Reflectible::get_value)
+        std::make_pair("get_value", &reflectible::get_value)
     );
     static constexpr auto parents = std::make_tuple(
-        putils::meta::type<Parent>{}
+        putils::meta::type<parent>{}
     );
     static constexpr auto used_types = std::make_tuple(
         putils::meta::type<int>{}
@@ -255,7 +255,7 @@ The `type_info` specialization can be easily defined through the use of helper m
 ### class_name
 
 ```cpp
-static constexpr auto class_name = "MyClass";
+static constexpr auto class_name = "my_class";
 ```
 Can be easily generated with `putils_reflection_class_name`.
 
@@ -284,7 +284,7 @@ Can be easily generated with `putils_reflection_methods`.
 ### parents
 ```cpp
 static constexpr auto parents = std::make_tuple(
-    putils::meta::type<Parent>{},
+    putils::meta::type<parent>{},
     ...
 );
 ```
@@ -446,10 +446,10 @@ Declares a specialization of `putils::reflection::type_info` for `refltype`.
 Declares a specialization of `putils::reflection_type_info` for a template type, e.g.:
 ```cpp
 template<typename T>
-struct MyType {};
+struct my_type {};
 
 template<typename T>
-#define refltype MyType<T>
+#define refltype my_type<T>
 putils_reflection_info_template {
     ...
 };
@@ -470,11 +470,11 @@ Defines a `class_name` static string with the macro parameter as its value.
 
 ### putils_reflection_attributes(attributes...)
 
-Defines an `attributes` static table of `std::pair<const char *, MemberPointer>`.
+Defines an `attributes` static table of `std::pair<const char *, member_pointer>`.
 
 ### putils_reflection_methods(methods...)
 
-Defines a `methods` static table of `std::pair<const char *, MemberPointer>`.
+Defines a `methods` static table of `std::pair<const char *, member_pointer>`.
 
 ### putils_reflection_parents(parents...)
 
@@ -502,21 +502,21 @@ const auto table = putils::make_table(
 #undef refltype
 ```
 
-### putils_reflection_attribute_private(memberPtr)
+### putils_reflection_attribute_private(member_ptr)
 
 Provides the same functionality as `putils_reflection_attribute`, but skips the first character of the attribute's name (such as an `_` or `m`) that would mark a private member. For instance:
 
 ```cpp
 const auto table = putils::make_table(
-    "name", &Human::_name,
-    "age", &Human::_age
+    "name", &human::_name,
+    "age", &human::_age
 );
 ```
 
 can be refactored to:
 
 ```cpp
-#define refltype Human
+#define refltype human
 const auto table = putils::make_table(
     putils_reflection_attribute_private(_name),
     putils_reflection_attribute_private(_age)
@@ -526,4 +526,4 @@ const auto table = putils::make_table(
 
 ### putils_reflection_type(name)
 
-Provides the same functionality as `putils_reflection_attribute`, but for types. It takes a type name as parameter and expands to `putils::meta::type<className>{}` to avoid redundancy when passing parameters to `putils::make_table`.
+Provides the same functionality as `putils_reflection_attribute`, but for types. It takes a type name as parameter and expands to `putils::meta::type<class_name>{}` to avoid redundancy when passing parameters to `putils::make_table`.
