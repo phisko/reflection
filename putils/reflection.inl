@@ -7,7 +7,6 @@
 #include "putils/meta/nameof.hpp"
 #include "putils/meta/for_each.hpp"
 #include "putils/meta/members.hpp"
-#include "putils/meta/traits/has_member.hpp"
 #include "putils/meta/traits/member_function_signature.hpp"
 
 // Define a type_info for a templated type, like C in the example above
@@ -44,25 +43,19 @@ namespace putils::reflection {
 	}
 
 #define putils_impl_reflection_member_detector(NAME) \
-	namespace detail {\
-		putils_member_detector(NAME);\
-	}\
 	template<typename T>\
 	constexpr bool has_##NAME() noexcept {\
-		return detail::has_member_##NAME<type_info<T>>();\
+		return requires{ putils::reflection::type_info<T>::NAME; };\
 	}
 
 #define putils_impl_reflection_member_detector_with_parents(NAME) \
-	namespace detail {\
-		putils_member_detector(NAME);\
-	}\
 	template<typename T>\
 	constexpr bool has_##NAME() noexcept {\
-		if constexpr (detail::has_member_##NAME<type_info<T>>())\
+		if constexpr (requires { putils::reflection::type_info<T>::NAME; })\
 			return true;\
-		return for_each_parent<T>([](const auto & parent) noexcept -> bool {\
-			using parent = putils_wrapped_type(parent.type);\
-			if constexpr (detail::has_member_##NAME<type_info<parent>>())  \
+		return for_each_parent<T>([](const auto & p) noexcept -> bool {\
+			using parent = putils_wrapped_type(p.type);\
+			if constexpr (requires { putils::reflection::type_info<parent>::NAME; })\
                 return true;\
             return false;\
 		});\
@@ -72,7 +65,7 @@ namespace putils::reflection {
 	namespace detail{\
 		template<typename T>\
 		constexpr decltype(auto) get_single_##NAME() noexcept {\
-			if constexpr (detail::has_member_##NAME<type_info<T>>())\
+			if constexpr (requires { putils::reflection::type_info<T>::NAME; })\
 				return type_info<T>::NAME;\
 			else\
                 return defaultValue;\
@@ -130,7 +123,7 @@ namespace putils::reflection {
 	namespace detail {
 		template<typename T>
 		struct type_info_with_parents {
-			static constexpr auto class_name = has_member_class_name<type_info<T>>() ? get_single_class_name<T>() : (const char *)nullptr;
+			static constexpr auto class_name = requires { putils::reflection::type_info<T>::class_name; } ? get_single_class_name<T>() : (const char *)nullptr;
 			static constexpr auto parents = get_all_parents<T>();
 			static constexpr auto attributes = get_all_attributes<T>(parents);
 			static constexpr auto methods = get_all_methods<T>(parents);
