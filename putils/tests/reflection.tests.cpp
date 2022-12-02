@@ -487,8 +487,8 @@ TEST(reflection, get_parents) {
 }
 
 TEST(reflection, for_each_parent) {
-    putils::reflection::for_each_parent<reflectible>([](const auto & parent) {
-        static_assert(std::is_same_v<putils_wrapped_type(parent.type), parent>);
+    putils::reflection::for_each_parent<reflectible>([](const auto & p) {
+        static_assert(std::is_same_v<putils_wrapped_type(p.type), parent>);
     });
 }
 
