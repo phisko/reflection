@@ -22,12 +22,15 @@ putils_reflection_info {
 	putils_reflection_class_name;
 	putils_reflection_attributes(
 		putils_reflection_attribute(iparent, putils_reflection_metadata("meta_key", "meta_value")),
-		putils_reflection_attribute(ciparent));
+		putils_reflection_attribute(ciparent)
+	);
 	putils_reflection_methods(
 		putils_reflection_attribute(fparent, putils_reflection_metadata("meta_key", "meta_value")),
-		putils_reflection_attribute(cfparent));
+		putils_reflection_attribute(cfparent)
+	);
 	putils_reflection_used_types(
-		putils_reflection_type(int));
+		putils_reflection_type(int)
+	);
 };
 #undef refltype
 
@@ -50,14 +53,18 @@ putils_reflection_info {
 		putils_reflection_attribute(i),
 		putils_reflection_attribute(ci),
 		putils_reflection_attribute(s),
-		putils_reflection_attribute(cs));
+		putils_reflection_attribute(cs)
+	);
 	putils_reflection_methods(
 		putils_reflection_attribute(f),
-		putils_reflection_attribute(cf));
+		putils_reflection_attribute(cf)
+	);
 	putils_reflection_parents(
-		putils_reflection_type(parent));
+		putils_reflection_type(parent)
+	);
 	putils_reflection_used_types(
-		putils_reflection_type(const char *));
+		putils_reflection_type(const char *)
+	);
 };
 #undef refltype
 
@@ -138,7 +145,8 @@ TEST(reflection, for_each_attribute_pointers) {
 			"i", &reflectible::i,
 			"ci", &reflectible::ci,
 			"s", &reflectible::s,
-			"cs", &reflectible::cs);
+			"cs", &reflectible::cs
+		);
 		int ret = 0;
 		putils::reflection::for_each_attribute<reflectible>([&](const auto & attr) {
 			const auto ptr = putils::get_value<putils_typeof(attr.ptr)>(table, attr.name);
@@ -159,7 +167,8 @@ TEST(reflection, for_each_attribute_references) {
 			"i", &obj.i,
 			"ci", &obj.ci,
 			"s", &obj.s,
-			"cs", &obj.cs);
+			"cs", &obj.cs
+		);
 		int ret = 0;
 		putils::reflection::for_each_attribute(obj, [&](const auto & attr) {
 			if (*putils::get_value<putils_typeof(&attr.member)>(table, attr.name) == &attr.member)
@@ -296,7 +305,8 @@ TEST(reflection, for_each_method_pointers) {
 			"fparent", &parent::fparent,
 			"cfparent", &parent::cfparent,
 			"f", &reflectible::f,
-			"cf", &reflectible::cf);
+			"cf", &reflectible::cf
+		);
 		int ret = 0;
 		putils::reflection::for_each_method<reflectible>([&](const auto & attr) {
 			const auto ptr = putils::get_value<putils_typeof(attr.ptr)>(table, attr.name);
@@ -313,7 +323,8 @@ TEST(reflection, for_each_method_references) {
 		"fparent", (double)0,
 		"cfparent", (double)0,
 		"f", (double)0,
-		"cf", (double)0);
+		"cf", (double)0
+	);
 	reflectible obj;
 	putils::reflection::for_each_method(obj, [&](const auto & attr) {
 		*putils::get_value<double>(table, attr.name) = attr.method(0);
@@ -340,7 +351,7 @@ TEST(reflection, get_method_constexpr_pointer) {
 #ifdef _MSC_VER // TODO: I wish this compiled on gcc
 	constexpr auto cfparent_method = putils::reflection::get_method<int(double), reflectible>("cfparent");
 	static_assert(cfparent_method != std::nullopt);
-	static_assert(*cfparent_method == (int (reflectible::*)(double))&reflectible::cfparent);
+	static_assert(*cfparent_method == (int(reflectible::*)(double)) & reflectible::cfparent);
 #endif
 
 	constexpr auto f_method = putils::reflection::get_method<int(double), reflectible>("f");
@@ -351,7 +362,7 @@ TEST(reflection, get_method_constexpr_pointer) {
 #ifdef _MSC_VER // TODO: I wish this compiled on gcc
 	constexpr auto cf_method = putils::reflection::get_method<int(double), reflectible>("cf");
 	static_assert(cf_method != std::nullopt);
-	static_assert(*cf_method == (int (reflectible::*)(double))&reflectible::cf);
+	static_assert(*cf_method == (int(reflectible::*)(double)) & reflectible::cf);
 #endif
 }
 
@@ -384,16 +395,16 @@ TEST(reflection, get_method_pointer) {
 	// TODO: I'd prefer not have to cast here, and have get_method return the const/noexcept qualified member pointer
 
 	const auto fparent_method = putils::reflection::get_method<int(double), reflectible>("fparent");
-	EXPECT_EQ(*fparent_method, (int (reflectible::*)(double))&reflectible::fparent);
+	EXPECT_EQ(*fparent_method, (int(reflectible::*)(double)) & reflectible::fparent);
 
 	const auto cfparent_method = putils::reflection::get_method<int(double), reflectible>("cfparent");
-	EXPECT_EQ(*cfparent_method, (int (reflectible::*)(double))&reflectible::cfparent);
+	EXPECT_EQ(*cfparent_method, (int(reflectible::*)(double)) & reflectible::cfparent);
 
 	const auto f_method = putils::reflection::get_method<int(double), reflectible>("f");
-	EXPECT_EQ(*f_method, (int (reflectible::*)(double))&reflectible::f);
+	EXPECT_EQ(*f_method, (int(reflectible::*)(double)) & reflectible::f);
 
 	const auto cf_method = putils::reflection::get_method<int(double), reflectible>("cf");
-	EXPECT_EQ(*cf_method, (int (reflectible::*)(double))&reflectible::cf);
+	EXPECT_EQ(*cf_method, (int(reflectible::*)(double)) & reflectible::cf);
 }
 
 TEST(reflection, get_method_pointer_missing) {
@@ -528,7 +539,8 @@ TEST(reflection, get_used_types) {
 TEST(reflection, for_each_used_type) {
 	constexpr auto parent_test = []() consteval {
 		auto table = putils::make_table(
-			putils::meta::type<int>(), false);
+			putils::meta::type<int>(), false
+		);
 
 		putils::reflection::for_each_used_type<parent>([&](const auto & type) {
 			*putils::get_value<bool>(table, type.type) = true;
@@ -540,7 +552,8 @@ TEST(reflection, for_each_used_type) {
 	constexpr auto reflectible_test = []() consteval {
 		auto table = putils::make_table(
 			putils::meta::type<int>(), false,
-			putils::meta::type<const char *>(), false);
+			putils::meta::type<const char *>(), false
+		);
 
 		putils::reflection::for_each_used_type<reflectible>([&](const auto & type) {
 			*putils::get_value<bool>(table, type.type) = true;

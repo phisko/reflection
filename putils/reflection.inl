@@ -116,10 +116,12 @@ namespace putils::reflection {
 	putils_impl_reflection_member_detector(class_name);
 	putils_impl_reflection_member_get_single(class_name, typeid(T).name());
 
+	// clang-format off
 #define putils_impl_reflection_member(NAME) \
 	putils_impl_reflection_member_detector_with_parents(NAME) \
 	putils_impl_reflection_member_get_single(NAME, detail::empty_tuple) \
 	putils_impl_reflection_member_get_all(NAME)
+	// clang-format on
 
 	putils_impl_reflection_member(attributes);
 	putils_impl_reflection_member(methods);
@@ -195,7 +197,8 @@ namespace putils::reflection {
 			return func(object_attribute_info{
 				.name = attr.name,
 				.member = obj.*attr.ptr,
-				.metadata = attr.metadata });
+				.metadata = attr.metadata,
+			});
 		});
 	}
 
@@ -233,7 +236,8 @@ namespace putils::reflection {
 			return func(object_method_info{
 				.name = attr.name,
 				.method = [&](auto &&... args) { return (obj.*attr.ptr)(FWD(args)...); },
-				.metadata = attr.metadata });
+				.metadata = attr.metadata,
+			});
 		});
 	}
 
@@ -323,7 +327,8 @@ namespace putils::reflection {
 		if constexpr (std::is_member_function_pointer_v<Signature>) {
 			const auto method = get_method<Signature>(name);
 			return call_method(method);
-		} else {
+		}
+		else {
 			const auto method = get_method<Signature, std::decay_t<T>>(name);
 			return call_method(method);
 		}
