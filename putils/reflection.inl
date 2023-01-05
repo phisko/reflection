@@ -162,7 +162,7 @@ namespace putils::reflection {
 \
 	template<typename T, typename Func> \
 	constexpr auto for_each_##NAME(Func && func) noexcept { \
-		return tuple_for_each(get_##NAME##s<T>(), func); \
+		return tuple_for_each(get_##NAME##s<T>(), FWD(func)); \
 	}
 
 	// get_attributes/methods<T>():
