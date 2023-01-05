@@ -49,13 +49,13 @@ namespace putils::reflection {
 
 #define putils_impl_reflection_member_detector(NAME) \
 	template<typename T> \
-	constexpr bool has_##NAME() noexcept { \
+	consteval bool has_##NAME() noexcept { \
 		return requires { putils::reflection::type_info<T>::NAME; }; \
 	}
 
 #define putils_impl_reflection_member_detector_with_parents(NAME) \
 	template<typename T> \
-	constexpr bool has_##NAME() noexcept { \
+	consteval bool has_##NAME() noexcept { \
 		if constexpr (requires { putils::reflection::type_info<T>::NAME; }) \
 			return true; \
 		return for_each_parent<T>([](const auto & p) noexcept -> bool { \
@@ -69,7 +69,7 @@ namespace putils::reflection {
 #define putils_impl_reflection_member_get_single(NAME, defaultValue) \
 	namespace detail { \
 		template<typename T> \
-		constexpr decltype(auto) get_single_##NAME() noexcept { \
+		consteval decltype(auto) get_single_##NAME() noexcept { \
 			if constexpr (requires { putils::reflection::type_info<T>::NAME; }) \
 				return type_info<T>::NAME; \
 			else \
@@ -80,7 +80,7 @@ namespace putils::reflection {
 #define putils_impl_reflection_member_get_all(NAME) \
 	namespace detail { \
 		template<typename T, typename... Ts> \
-		constexpr auto get_all_##NAME() noexcept { \
+		consteval auto get_all_##NAME() noexcept { \
 			if constexpr (sizeof...(Ts) == 0) \
 				return get_single_##NAME<T>(); \
 			else \
@@ -88,13 +88,13 @@ namespace putils::reflection {
 		} \
 \
 		template<typename T, typename... Parents, typename... MetadataTables> \
-		constexpr auto get_all_##NAME(const std::tuple<putils::reflection::used_type_info<Parents, MetadataTables>...> &) noexcept { \
+		consteval auto get_all_##NAME(const std::tuple<putils::reflection::used_type_info<Parents, MetadataTables>...> &) noexcept { \
 			return get_all_##NAME<T, Parents...>(); \
 		} \
 	}
 
 	template<typename T>
-	constexpr bool is_reflectible() noexcept {
+	consteval bool is_reflectible() noexcept {
 		return requires { type_info<T>{}; };
 	}
 
@@ -102,15 +102,15 @@ namespace putils::reflection {
 	putils_impl_reflection_member_get_single(parents, detail::empty_tuple);
 	namespace detail {
 		template<typename T>
-		constexpr auto get_all_parents() noexcept;
+		consteval auto get_all_parents() noexcept;
 
 		template<typename... Ts, typename... MetadataTables>
-		constexpr auto get_all_parents(const std::tuple<used_type_info<Ts, MetadataTables>...> &) noexcept {
+		consteval auto get_all_parents(const std::tuple<used_type_info<Ts, MetadataTables>...> &) noexcept {
 			return std::tuple_cat(get_all_parents<Ts>()...);
 		}
 
 		template<typename T>
-		constexpr auto get_all_parents() noexcept {
+		consteval auto get_all_parents() noexcept {
 			if constexpr (has_parents<T>())
 				return std::tuple_cat(get_single_parents<T>(), get_all_parents(get_single_parents<T>()));
 			else
@@ -147,7 +147,7 @@ namespace putils::reflection {
 	}
 
 	template<typename T>
-	constexpr auto get_class_name() noexcept {
+	consteval auto get_class_name() noexcept {
 		if constexpr (detail::type_info_with_parents<T>::class_name != nullptr)
 			return detail::type_info_with_parents<T>::class_name;
 		else
@@ -156,7 +156,7 @@ namespace putils::reflection {
 
 #define putils_impl_reflection_member_getter_and_for_each(NAME) \
 	template<typename T> \
-	constexpr const auto & get_##NAME##s() noexcept { \
+	consteval const auto & get_##NAME##s() noexcept { \
 		return detail::type_info_with_parents<T>::NAME##s; \
 	} \
 \
@@ -181,7 +181,7 @@ namespace putils::reflection {
 	putils_impl_reflection_member_getter_and_for_each(used_type);
 
 	template<typename T, typename Parent>
-	constexpr bool has_parent() noexcept {
+	consteval bool has_parent() noexcept {
 		return for_each_parent<T>([](const auto & parent) {
 			using p = putils_wrapped_type(parent.type);
 			return std::is_same_v<p, Parent>;
@@ -189,7 +189,7 @@ namespace putils::reflection {
 	}
 
 	template<typename T, typename Used>
-	constexpr bool has_used_type() noexcept {
+	consteval bool has_used_type() noexcept {
 		return for_each_used_type<T>([](const auto & used) {
 			using u = putils_wrapped_type(used.type);
 			return std::is_same_v<u, Used>;

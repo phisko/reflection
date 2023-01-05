@@ -51,10 +51,13 @@ namespace putils::reflection {
 	};
 
 	template<typename T>
-	constexpr bool is_reflectible() noexcept;
+	consteval bool is_reflectible() noexcept;
 
 	template<typename T>
-	constexpr auto get_class_name() noexcept;
+	consteval auto get_class_name() noexcept;
+
+	template<typename T>
+	consteval const auto & get_parents() noexcept;
 
 	// For each parent of T, get a used_type_info
 	// Same behavior as putils::tuple_for_each
@@ -62,7 +65,10 @@ namespace putils::reflection {
 	constexpr auto for_each_parent(Func && func) noexcept;
 
 	template<typename T, typename Parent>
-	constexpr bool has_parent() noexcept;
+	consteval bool has_parent() noexcept;
+
+	template<typename T>
+	consteval const auto & get_used_types() noexcept;
 
 	// For each type used by T, get a used_type_info
 	// Same behavior as putils::tuple_for_each
@@ -70,7 +76,10 @@ namespace putils::reflection {
 	constexpr auto for_each_used_type(Func && func) noexcept;
 
 	template<typename T, typename Used>
-	constexpr bool has_used_type() noexcept;
+	consteval bool has_used_type() noexcept;
+
+	template<typename T>
+	consteval const auto & get_attributes() noexcept;
 
 	// For each attribute in T, get an attribute_info
 	// Same behavior as putils::tuple_for_each
@@ -92,6 +101,9 @@ namespace putils::reflection {
 	// Try to find an attribute called "name" and get a pointer to it in obj, or nullptr
 	template<typename Attribute, typename T>
 	constexpr auto /* [const] Attribute * */ get_attribute(T && obj, std::string_view name) noexcept;
+
+	template<typename T>
+	consteval const auto & get_methods() noexcept;
 
 	// For each method in T, get an attribute_info
 	// Same behavior as putils::tuple_for_each
