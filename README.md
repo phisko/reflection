@@ -308,6 +308,9 @@ The following functions are defined to let client code check whether a given typ
 ```cpp
 namespace putils::reflection {
     template<typename T>
+    constexpr bool is_reflectible() noexcept; // Returns true if reflection info, even empty, was provided
+
+    template<typename T>
     constexpr bool has_class_name() noexcept;
 
     template<typename T>
