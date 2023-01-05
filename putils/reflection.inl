@@ -93,6 +93,11 @@ namespace putils::reflection {
 		} \
 	}
 
+	template<typename T>
+	constexpr bool is_reflectible() noexcept {
+		return requires { type_info<T>{}; };
+	}
+
 	putils_impl_reflection_member_detector(parents);
 	putils_impl_reflection_member_get_single(parents, detail::empty_tuple);
 	namespace detail {

@@ -12,13 +12,13 @@
 
 namespace putils::reflection {
 	template<typename T>
-	struct type_info {
-		// static constexpr auto class_name = const char *;
-		// static constexpr auto attributes = std::tuple<attribute_info>;
-		// static constexpr auto methods = std::tuple<attribute_info>;
-		// static constexpr auto parents = std::tuple<used_type_info>;
-		// static constexpr auto used_types = std::tuple<used_type_info>;
-	};
+	struct type_info;
+	// may have:
+	// 		static constexpr auto class_name = const char *;
+	// 		static constexpr auto attributes = std::tuple<attribute_info>;
+	// 		static constexpr auto methods = std::tuple<attribute_info>;
+	// 		static constexpr auto parents = std::tuple<used_type_info>;
+	// 		static constexpr auto used_types = std::tuple<used_type_info>;
 
 	template<typename MemberPtr, typename MetadataTable>
 	struct attribute_info {
@@ -49,6 +49,9 @@ namespace putils::reflection {
 		const putils::meta::type<T> type;
 		const MetadataTable metadata; // putils::table<Key, Value...>
 	};
+
+	template<typename T>
+	constexpr bool is_reflectible() noexcept;
 
 	template<typename T>
 	constexpr auto get_class_name() noexcept;
@@ -104,7 +107,6 @@ namespace putils::reflection {
 	constexpr bool has_method(std::string_view name) noexcept;
 
 	// Try to find a method called "name" and get an optional functor taking a `T` that calls the method on it
-	// `Const` template argument is required when getting pointers to const methods in a constexpr context
 	template<typename Signature, typename T>
 	constexpr auto get_method(std::string_view name) noexcept;
 	// Alternatively, provide the complete member function type (i.e. `void (Type::*)()`). Required in a constexpr context with gcc

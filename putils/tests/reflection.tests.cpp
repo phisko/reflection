@@ -69,6 +69,30 @@ putils_reflection_info {
 #undef refltype
 
 /*
+* is_reflectible
+*/
+
+TEST(reflection, is_reflectible_true) {
+	static_assert(putils::reflection::is_reflectible<reflectible>());
+	SUCCEED();
+}
+
+TEST(reflection, is_reflectible_false) {
+	static_assert(!putils::reflection::is_reflectible<int>());
+	SUCCEED();
+}
+
+struct barebones_reflectible {};
+#define refltype barebones_reflectible
+putils_reflection_info {};
+#undef refltype
+
+TEST(reflection, is_reflectible_barebones) {
+	static_assert(putils::reflection::is_reflectible<barebones_reflectible>());
+	SUCCEED();
+}
+
+/*
  * Class name
  */
 
