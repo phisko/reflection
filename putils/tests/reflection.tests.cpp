@@ -84,7 +84,7 @@ TEST(reflection, is_reflectible_false) {
 
 struct barebones_reflectible {};
 #define refltype barebones_reflectible
-putils_reflection_info {};
+putils_reflection_info{};
 #undef refltype
 
 TEST(reflection, is_reflectible_barebones) {
