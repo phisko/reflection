@@ -60,9 +60,7 @@ namespace putils::reflection {
 			return true; \
 		return for_each_parent<T>([](const auto & p) noexcept -> bool { \
 			using parent = putils_wrapped_type(p.type); \
-			if constexpr (requires { putils::reflection::type_info<parent>::NAME; }) \
-				return true; \
-			return false; \
+			return requires { putils::reflection::type_info<parent>::NAME; }; \
 		}); \
 	}
 
@@ -119,7 +117,7 @@ namespace putils::reflection {
 	}
 
 	putils_impl_reflection_member_detector(class_name);
-	putils_impl_reflection_member_get_single(class_name, typeid(T).name());
+	putils_impl_reflection_member_get_single(class_name, nullptr);
 
 	// clang-format off
 #define putils_impl_reflection_member(NAME) \
@@ -135,10 +133,7 @@ namespace putils::reflection {
 	namespace detail {
 		template<typename T>
 		struct type_info_with_parents {
-			static constexpr auto class_name =
-				requires { putils::reflection::type_info<T>::class_name; } ?
-				get_single_class_name<T>() :
-				(const char *)nullptr;
+			static constexpr auto class_name = get_single_class_name<T>();
 			static constexpr auto parents = get_all_parents<T>();
 			static constexpr auto attributes = get_all_attributes<T>(parents);
 			static constexpr auto methods = get_all_methods<T>(parents);
@@ -147,11 +142,8 @@ namespace putils::reflection {
 	}
 
 	template<typename T>
-	consteval auto get_class_name() noexcept {
-		if constexpr (detail::type_info_with_parents<T>::class_name != nullptr)
-			return detail::type_info_with_parents<T>::class_name;
-		else
-			return typeid(T).name();
+	constexpr auto get_class_name() noexcept {
+		return detail::type_info_with_parents<T>::class_name;
 	}
 
 #define putils_impl_reflection_member_getter_and_for_each(NAME) \

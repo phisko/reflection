@@ -54,7 +54,7 @@ namespace putils::reflection {
 	consteval bool is_reflectible() noexcept;
 
 	template<typename T>
-	consteval auto get_class_name() noexcept;
+	constexpr auto get_class_name() noexcept;
 
 	template<typename T>
 	consteval const auto & get_parents() noexcept;
