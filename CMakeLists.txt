@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.3)
 project(putils_reflection HOMEPAGE_URL "https://github.com/phisko/reflection")
 
 set(CMAKE_CXX_STANDARD 20)
@@ -8,6 +8,8 @@ target_include_directories(putils_reflection INTERFACE .)
 
 add_subdirectory(meta)
 target_link_libraries(putils_reflection INTERFACE putils_meta)
+
+include(generate_reflection_headers.cmake)
 
 option(PUTILS_REFLECTION_TESTS "Build reflection tests" OFF)
 if (PUTILS_REFLECTION_TESTS)

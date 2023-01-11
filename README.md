@@ -10,6 +10,10 @@ The "used types" concept can refer to anything really, but one interesting use c
 
 An example use case for this API is the register_type function provided for [Lua](https://github.com/phisko/putils/blob/master/lua/lua_helper.hpp#L80) and [Python](https://github.com/phisko/putils/blob/master/python/python_helper.inl) in my putils library, that inspects a type and registers all its attributes and methods to the scripting language.
 
+## Helpers
+
+A [generate_reflection_headers](generate_reflection_headers.md) script is provided to automatically generate reflection info. This is however completely optional, and you might prefer writing your reflection info by hand to start with.
+
 ## Overview
 
 Making a type reflectible is done like so:
