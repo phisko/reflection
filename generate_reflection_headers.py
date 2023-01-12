@@ -166,9 +166,7 @@ for input_file in args.files:
 		os.remove(output_file)
 		continue
 
-	result = '#pragma once\n\n'
-	result += f'#include "{os.path.basename(input_file)}"\n'
-	result += '#include "putils/reflection.hpp"'
+	result = '#pragma once\n\n#include "putils/reflection.hpp"'
 	for reflection_info in reflection_infos:
 		result += generate_reflection_info(reflection_info)
 	# Don't write it straight away so that the reflection info doesn't exist while processing other files
