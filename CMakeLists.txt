@@ -9,7 +9,7 @@ target_include_directories(putils_reflection INTERFACE .)
 add_subdirectory(meta)
 target_link_libraries(putils_reflection INTERFACE putils_meta)
 
-include(generate_reflection_headers.cmake)
+include(scripts/generate_reflection_headers.cmake)
 
 option(PUTILS_REFLECTION_TESTS "Build reflection tests" OFF)
 if (PUTILS_REFLECTION_TESTS)

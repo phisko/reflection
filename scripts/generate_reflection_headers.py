@@ -3,6 +3,8 @@ import os
 import re
 from clang.cindex import *
 
+import clang_helpers
+
 parser = argparse.ArgumentParser(description='Generate putils reflection headers')
 parser.add_argument('files', help = 'input headers to parse', nargs = '+')
 parser.add_argument('--extension', help = 'output file extension', default = '.reflection.hpp')
@@ -11,19 +13,8 @@ parser.add_argument('--diagnostics', help = 'Print clang diagnostic messages', a
 
 args = parser.parse_args()
 
-def get_fully_qualified_symbol(c):
-	if c is None:
-		return ''
-	elif c.kind == CursorKind.TRANSLATION_UNIT:
-		return ''
-	else:
-		res = get_fully_qualified_symbol(c.semantic_parent)
-		if res != '':
-			return res + '::' + c.spelling
-		return c.spelling
-
 def get_reflection_info_for_type(node, reflection_type):
-	reflection_info = { 'type': get_fully_qualified_symbol(node) }
+	reflection_info = { 'type': clang_helpers.get_fully_qualified_symbol(node) }
 
 	match = re.match(r'.*class_name:\s*([^\s]+).*', node.brief_comment)
 	if match:
@@ -82,7 +73,7 @@ def visit_node(node):
 		if not node.brief_comment:
 			return
 
-		match = re.match(r'^putils reflect (\w+)', node.brief_comment)
+		match = re.match(r'.*putils reflect (\w+)', node.brief_comment)
 		if match:
 			reflection_info = get_reflection_info_for_type(node, match.group(1))
 			reflection_infos.append(reflection_info)
@@ -130,37 +121,39 @@ def get_output_file(input_file):
 		return None
 	return base_file + args.extension
 
+#
+# Main
+#
+
 # Truncate all existing output files
 for input_file in args.files:
 	output_file = get_output_file(input_file)
 	if not output_file:
 		continue
+
 	with open(output_file, 'w') as f:
 		f.write('')
 
-to_write = []
-index = Index.create()
-for input_file in args.files:
-	output_file = get_output_file(input_file)
+parsed_files = clang_helpers.parse_files(args.files, args.clang_args)
+
+for file_name, parsed_file in parsed_files.items():
+	output_file = get_output_file(file_name)
 	if not output_file:
 		continue
 
-	clang_args = []
-	if args.clang_args:
-		for arg in args.clang_args:
-			clang_args += arg.split()
-	tu = index.parse(input_file, args = clang_args, options = TranslationUnit.PARSE_INCOMPLETE)
+	if not 'nodes' in parsed_file:
+		continue
 
 	if args.diagnostics:
-		if tu.diagnostics:
-			print(f'Diagnostics for {input_file}:')
-		for diagnostic in tu.diagnostics:
-			print(f'\t{diagnostic}')
+		diagnostics = parsed_file['diagnostics']
+		if diagnostics:
+			print(f'Diagnostics for {file_name}:')
+			for diagnostic in diagnostics:
+				print(f'\t{diagnostic}')
 
 	reflection_infos = []
-	for child in tu.cursor.get_children():
-		if str(child.location.file) == input_file:
-			reflection_infos += visit_node(child)
+	for node in parsed_file['nodes']:
+		reflection_infos += visit_node(node)
 
 	if not reflection_infos:
 		os.remove(output_file)
@@ -169,9 +162,6 @@ for input_file in args.files:
 	result = '#pragma once\n\n#include "putils/reflection.hpp"'
 	for reflection_info in reflection_infos:
 		result += generate_reflection_info(reflection_info)
-	# Don't write it straight away so that the reflection info doesn't exist while processing other files
-	to_write.append({ 'file': output_file, 'content': result })
 
-for file in to_write:
-	with open(file['file'], 'w') as f:
-		f.write(file['content'])
+	with open(output_file, 'w') as f:
+		f.write(result)
