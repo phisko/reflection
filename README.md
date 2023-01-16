@@ -12,7 +12,7 @@ An example use case for this API is the register_type function provided for [Lua
 
 ## Helpers
 
-A [generate_reflection_headers](generate_reflection_headers.md) script is provided to automatically generate reflection info. This is however completely optional, and you might prefer writing your reflection info by hand to start with.
+A [generate_reflection_headers](scripts/generate_reflection_headers.md) script is provided to automatically generate reflection info. This is however completely optional, and you might prefer writing your reflection info by hand to start with.
 
 ## Overview
 
