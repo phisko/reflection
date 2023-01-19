@@ -26,3 +26,22 @@ jobs:
     uses: phisko/cmake-cxx-conan/.github/workflows/build.yml@main
     with:
       cmake_options: -DPUTILS_REFLECTION_TESTS=ON
+
+  test_script:
+    strategy:
+      matrix:
+        platform: [ ubuntu-latest, windows-latest ]
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+    - name: Install pip dependencies
+      run: pip install pytest libclang
+
+    - name: Clone repo
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: Run tests
+      run: pytest scripts/tests/generate_reflection_headers_test.py

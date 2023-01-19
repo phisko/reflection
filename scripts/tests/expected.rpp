@@ -1,0 +1,24 @@
+#pragma once
+
+#include "putils/reflection.hpp"
+
+#define refltype reflectible
+putils_reflection_info {
+	putils_reflection_class_name;
+	putils_reflection_attributes(
+		putils_reflection_attribute(i),
+		putils_reflection_attribute(name)
+	);
+	putils_reflection_methods(
+		putils_reflection_attribute(f),
+		putils_reflection_attribute(g)
+	);
+	putils_reflection_parents(
+		putils_reflection_type(base)
+	);
+	putils_reflection_used_types(
+		putils_reflection_type(int),
+		putils_reflection_type(std::string)
+	);
+};
+#undef refltype
