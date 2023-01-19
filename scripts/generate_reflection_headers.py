@@ -155,7 +155,8 @@ for file_name, parsed_file in parsed_files.items():
 		reflection_infos += visit_node(node)
 
 	if not reflection_infos:
-		os.remove(output_file)
+		if os.path.exists(output_file):
+			os.remove(output_file)
 		continue
 
 	result = '#pragma once\n\n#include "putils/reflection.hpp"'
