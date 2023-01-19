@@ -9,7 +9,7 @@ import clang_helpers
 
 parser = argparse.ArgumentParser(description='Generate putils reflection headers')
 parser.add_argument('files', help = 'input headers to parse', nargs = '+')
-parser.add_argument('--extension', help = 'output file extension', default = '.reflection.hpp')
+parser.add_argument('--extension', help = 'output file extension', default = '.rpp')
 parser.add_argument('--clang-args', help = 'extra arguments to pass to clang', nargs = argparse.REMAINDER, required = False)
 parser.add_argument('--diagnostics', help = 'Print clang diagnostic messages', action = 'store_true', required = False)
 
