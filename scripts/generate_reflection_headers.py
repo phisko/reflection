@@ -133,17 +133,14 @@ for input_file in args.files:
 	if not output_file:
 		continue
 
-	with open(output_file, 'w') as f:
-		f.write('')
+	with open(output_file, 'w'):
+		pass
 
 parsed_files = clang_helpers.parse_files(args.files, args.clang_args)
 
 for file_name, parsed_file in parsed_files.items():
 	output_file = get_output_file(file_name)
 	if not output_file:
-		continue
-
-	if not 'nodes' in parsed_file:
 		continue
 
 	if args.diagnostics:
