@@ -11,7 +11,7 @@ target_link_libraries(putils_reflection INTERFACE putils_meta)
 
 include(scripts/generate_reflection_headers.cmake)
 
-option(PUTILS_REFLECTION_TESTS "Build reflection tests" OFF)
+option(PUTILS_REFLECTION_TESTS "Build reflection tests")
 if (PUTILS_REFLECTION_TESTS)
     enable_testing()
 
