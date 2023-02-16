@@ -33,10 +33,12 @@ function(putils_generate_reflection_headers)
 
         get_filename_component(time_marker_directory ${time_marker_file} DIRECTORY)
 
+        set(command_file ${time_marker_file}_command.py)
+        putils_generate_python_command_file(${command_file} "${command}")
         add_custom_command(
                 OUTPUT ${time_marker_file}
                 COMMENT "Generating reflection code for ${source_file}"
-                COMMAND ${command}
+                COMMAND python ${command_file}
                 COMMAND ${CMAKE_COMMAND} -E make_directory ${time_marker_directory}
                 COMMAND ${CMAKE_COMMAND} -E touch ${time_marker_file}
                 DEPENDS ${source_file} ${python_script}
