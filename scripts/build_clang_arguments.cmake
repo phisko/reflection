@@ -19,10 +19,11 @@ function(putils_build_clang_arguments out_var target)
 
     get_joined_property(include_directories INCLUDE_DIRECTORIES -I)
     list(APPEND clang_args ${include_directories})
+    get_joined_property(include_directories INTERFACE_INCLUDE_DIRECTORIES -I)
+    list(APPEND clang_args ${include_directories})
 
     get_joined_property(compile_definitions COMPILE_DEFINITIONS -D)
     list(APPEND clang_args ${compile_definitions})
-
     get_joined_property(interface_compile_definitions INTERFACE_COMPILE_DEFINITIONS -D)
     list(APPEND clang_args ${interface_compile_definitions})
 
