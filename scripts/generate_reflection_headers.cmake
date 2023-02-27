@@ -33,7 +33,7 @@ function(putils_generate_reflection_headers)
 
         get_filename_component(time_marker_directory ${time_marker_file} DIRECTORY)
 
-        set(command_file ${time_marker_file}_command.py)
+        set(command_file "${time_marker_file}_command_$<CONFIG>.py")
         putils_generate_python_command_file(${command_file} "${command}")
         add_custom_command(
                 OUTPUT ${time_marker_file}
