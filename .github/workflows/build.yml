@@ -23,9 +23,10 @@ on:
 
 jobs:
   build:
-    uses: phisko/cmake-cxx-conan/.github/workflows/build.yml@main
+    uses: phisko/cmake-cxx-vcpkg/.github/workflows/build.yml@main
     with:
       cmake_options: -DPUTILS_REFLECTION_TESTS=ON
+      vcpkg_commit: '223d33be7d3ec6c3d64381ca37f501b8c87dda6a'
 
   test_script:
     strategy:
