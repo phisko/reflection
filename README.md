@@ -159,7 +159,7 @@ constexpr size_t count_attributes() {
 static_assert(count_attributes() == 1);
 ```
 
-Functions are also provided to check if a type exposes a given property:
+Functions and concepts are also provided to check if a type exposes a given property:
 
 ```cpp
 static_assert(putils::reflection::has_class_name<reflectible>());
@@ -167,6 +167,9 @@ static_assert(putils::reflection::has_attributes<reflectible>());
 static_assert(putils::reflection::has_methods<reflectible>());
 static_assert(putils::reflection::has_parents<reflectible>());
 static_assert(putils::reflection::has_used_types<reflectible>());
+
+static_assert(putils::reflection::with_class_name<reflectible>);
+...
 ```
 
 ## Metadata
