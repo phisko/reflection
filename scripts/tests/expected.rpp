@@ -7,10 +7,10 @@ putils_reflection_info {
 	putils_reflection_class_name;
 	putils_reflection_attributes(
 		putils_reflection_attribute(i),
-		putils_reflection_attribute(name)
+		putils_reflection_attribute(name, putils_reflection_metadata("key", "value"))
 	);
 	putils_reflection_methods(
-		putils_reflection_attribute(f),
+		putils_reflection_attribute(f, putils_reflection_metadata("zero", 0), putils_reflection_metadata("foo", "bar"), putils_reflection_metadata(("key", "morekey"), ("value", ["morevalue1", "morevalue2"]))),
 		putils_reflection_attribute(g)
 	);
 	putils_reflection_parents(

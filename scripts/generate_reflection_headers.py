@@ -15,17 +15,42 @@ parser.add_argument('--diagnostics', help = 'Print clang diagnostic messages', a
 
 args = parser.parse_args()
 
+def get_metadata(node):
+	raw_metadata = clang_helpers.parse_value_from_comment(node, 'metadata')
+	if not raw_metadata:
+		return None
+
+	all_metadata = []
+	start = None
+	open_count = 0
+	for i, c in enumerate(raw_metadata):
+		if c == '(':
+			if start == None:
+				start = i
+			open_count += 1
+		elif c == ')':
+			open_count -= 1
+			if open_count == 0:
+				all_metadata.append(raw_metadata[start + 1:i])
+				start = None
+	assert(open_count == 0)
+	return all_metadata
+
 def get_reflection_info_for_type(node, reflection_type):
 	reflection_info = { 'type': clang_helpers.get_fully_qualified_symbol(node) }
 
-	match = re.match(r'.*class_name:\s*([^\s]+).*', node.brief_comment)
-	if match:
-		reflection_info['class_name'] = match.group(1)
+	class_name = clang_helpers.parse_value_from_comment(node, 'class_name')
+	if class_name:
+		reflection_info['class_name'] = class_name
 
 	def add_list_property_to_reflection_infos(prop_name):
-		match = re.match(f'.*{prop_name}:\s*\[([^\]]*)\].*', node.brief_comment)
-		if match:
-			reflection_info[prop_name] = [s.strip() for s in match.group(1).split(',')]
+		values = clang_helpers.parse_array_from_comment(node, prop_name)
+		for value in values:
+			info = { 'name': value }
+			if not prop_name in reflection_info:
+				reflection_info[prop_name] = []
+			reflection_info[prop_name].append(info)
+
 	add_list_property_to_reflection_infos('parents')
 	add_list_property_to_reflection_infos('used_types')
 
@@ -53,9 +78,14 @@ def get_reflection_info_for_type(node, reflection_type):
 			if child.kind != target_kind:
 				continue
 
+			child_info = { 'name': child.spelling }
+			metadata = get_metadata(child)
+			if metadata:
+				child_info['metadata'] = metadata
+
 			if not target_reflection_type in reflection_info:
 				reflection_info[target_reflection_type] = []
-			reflection_info[target_reflection_type].append(child.spelling)
+			reflection_info[target_reflection_type].append(child_info)
 
 	add_children_to_reflection_infos(node, 'attributes', CursorKind.FIELD_DECL)
 	add_children_to_reflection_infos(node, 'methods', CursorKind.CXX_METHOD)
@@ -101,7 +131,11 @@ def generate_reflection_info(reflection_info):
 
 		result += f'\tputils_reflection_{prop_name}(\n'
 		for index, attr in enumerate(reflection_info[prop_name]):
-			result += f'\t\t{item_macro}({attr})'
+			result += f'\t\t{item_macro}({attr["name"]}'
+			if 'metadata' in attr:
+				for key_value in attr['metadata']:
+					result += f', putils_reflection_metadata({key_value})'
+			result += ')'
 			if index != len(reflection_info[prop_name]) - 1:
 				result += ','
 			result += '\n'
