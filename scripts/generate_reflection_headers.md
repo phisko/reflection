@@ -102,3 +102,7 @@ putils_reflection_info {
 };
 #undef refltype
 ```
+
+## Specifying metadata
+
+Metadata can be added to properties or attributes by adding `metadata: [(key, value), ...]` to your brief comment
