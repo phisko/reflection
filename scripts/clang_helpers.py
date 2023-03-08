@@ -46,12 +46,12 @@ def parse_value_from_comment(node, key):
     if not node.brief_comment:
         return None
 
-    def try_match(open, close):
-        match = re.match(f'.*{key}:\s*(.*)$', node.brief_comment)
-        if not match:
-            return None
-        remainder = match.group(1)
+    match = re.match(f'.*{key}:\s*(.*)$', node.brief_comment)
+    if not match:
+        return None
+    remainder = match.group(1)
 
+    def try_match(remainder, open, close):
         if not remainder.startswith(open):
             return None
 
@@ -73,11 +73,11 @@ def parse_value_from_comment(node, key):
         return None
 
     for i, c in enumerate(open_brackets):
-        result = try_match(c, closed_brackets[i])
+        result = try_match(remainder, c, closed_brackets[i])
         if result:
             return result
 
-    return None
+    return remainder.split(maxsplit=1)[0]
 
 def parse_array_from_comment(node, key):
     value = parse_value_from_comment(node, key)

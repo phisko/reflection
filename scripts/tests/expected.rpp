@@ -20,5 +20,9 @@ putils_reflection_info {
 		putils_reflection_type(int),
 		putils_reflection_type(std::string)
 	);
+	putils_reflection_type_metadata(
+		putils_reflection_metadata("key", "value"),
+		putils_reflection_metadata(("otherkey", "moreotherkey"), ["othervalue", "moreothervalue"])
+	);
 };
 #undef refltype

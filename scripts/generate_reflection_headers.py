@@ -43,14 +43,20 @@ def get_reflection_info_for_type(node, reflection_type):
 	if class_name:
 		reflection_info['class_name'] = class_name
 
-	def add_list_property_to_reflection_infos(prop_name):
-		values = clang_helpers.parse_array_from_comment(node, prop_name)
-		for value in values:
+	def add_list_to_reflection_infos(prop_name, list):
+		if not list:
+			return
+		for value in list:
 			info = { 'name': value }
 			if not prop_name in reflection_info:
 				reflection_info[prop_name] = []
 			reflection_info[prop_name].append(info)
 
+	def add_list_property_to_reflection_infos(prop_name):
+		values = clang_helpers.parse_array_from_comment(node, prop_name)
+		add_list_to_reflection_infos(prop_name, values)
+
+	add_list_to_reflection_infos('type_metadata', get_metadata(node))
 	add_list_property_to_reflection_infos('parents')
 	add_list_property_to_reflection_infos('used_types')
 
@@ -146,6 +152,7 @@ def generate_reflection_info(reflection_info):
 	result += generate_property_list('methods', 'putils_reflection_attribute')
 	result += generate_property_list('parents', 'putils_reflection_type')
 	result += generate_property_list('used_types', 'putils_reflection_type')
+	result += generate_property_list('type_metadata', 'putils_reflection_metadata')
 
 	result += '};\n'
 	result += '#undef refltype'

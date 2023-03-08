@@ -21,7 +21,7 @@
 #define putils_reflection_friend(T) friend struct putils::reflection::type_info<T>;
 
 // implementation detail
-#define putils_impl_reflection_static_tuple(NAME, ...) static constexpr auto NAME = std::make_tuple(__VA_ARGS__);
+#define putils_impl_reflection_static_tuple(NAME, FUNCTION, ...) static constexpr auto NAME = FUNCTION(__VA_ARGS__);
 
 // Lets you define a custom class name
 #define putils_reflection_custom_class_name(custom_class_name) static constexpr auto class_name = putils_nameof(custom_class_name) + (std::string_view(putils_nameof(custom_class_name)).rfind("::") != std::string_view::npos ? std::string_view(putils_nameof(custom_class_name)).rfind("::") + 2 : 0);
@@ -29,10 +29,11 @@
 // Uses refltype as class name
 #define putils_reflection_class_name putils_reflection_custom_class_name(refltype)
 
-#define putils_reflection_attributes(...) putils_impl_reflection_static_tuple(attributes, __VA_ARGS__)
-#define putils_reflection_methods(...) putils_impl_reflection_static_tuple(methods, __VA_ARGS__)
-#define putils_reflection_parents(...) putils_impl_reflection_static_tuple(parents, __VA_ARGS__)
-#define putils_reflection_used_types(...) putils_impl_reflection_static_tuple(used_types, __VA_ARGS__)
+#define putils_reflection_attributes(...) putils_impl_reflection_static_tuple(attributes, std::make_tuple, __VA_ARGS__)
+#define putils_reflection_methods(...) putils_impl_reflection_static_tuple(methods, std::make_tuple, __VA_ARGS__)
+#define putils_reflection_parents(...) putils_impl_reflection_static_tuple(parents, std::make_tuple, __VA_ARGS__)
+#define putils_reflection_used_types(...) putils_impl_reflection_static_tuple(used_types, std::make_tuple, __VA_ARGS__)
+#define putils_reflection_type_metadata(...) putils_impl_reflection_static_tuple(metadata, putils::make_table, __VA_ARGS__)
 
 #define putils_reflection_attribute(member, ...) \
 	putils::reflection::attribute_info { .name = #member, .ptr = &refltype::member, .metadata = putils::make_table(__VA_ARGS__) }
@@ -129,6 +130,7 @@ namespace putils::reflection {
 	putils_impl_reflection_member(attributes);
 	putils_impl_reflection_member(methods);
 	putils_impl_reflection_member(used_types);
+	putils_impl_reflection_member(metadata);
 
 	namespace detail {
 		template<typename T>
@@ -138,6 +140,7 @@ namespace putils::reflection {
 			static constexpr auto attributes = get_all_attributes<T>(parents);
 			static constexpr auto methods = get_all_methods<T>(parents);
 			static constexpr auto used_types = get_all_used_types<T>(parents);
+			static constexpr auto metadata = get_all_metadata<T>(parents);
 		};
 	}
 
@@ -171,6 +174,17 @@ namespace putils::reflection {
 	putils_impl_reflection_member_getter_and_for_each(method);
 	putils_impl_reflection_member_getter_and_for_each(parent);
 	putils_impl_reflection_member_getter_and_for_each(used_type);
+
+	// Can't use macro for these as we don't want "get_metadatas"
+	template<typename T>
+	consteval const auto & get_metadata() noexcept {
+		return detail::type_info_with_parents<T>::metadata;
+	}
+
+	template<typename T, typename Func>
+	constexpr auto for_each_metadata(Func && func) noexcept {
+		return tuple_for_each(get_metadata<T>(), FWD(func));
+	}
 
 	template<typename T, typename Parent>
 	consteval bool has_parent() noexcept {
@@ -329,6 +343,18 @@ namespace putils::reflection {
 			const auto method = get_method<Signature, std::decay_t<T>>(name);
 			return call_method(method);
 		}
+	}
+
+	template<typename T, typename Key>
+	constexpr bool has_metadata(Key && key) noexcept {
+		constexpr auto & table = get_metadata<T>();
+		return has_metadata(table, FWD(key));
+	}
+
+	template<typename Ret, typename T, typename Key>
+	constexpr const Ret * get_metadata(Key && key) noexcept {
+		constexpr auto & table = get_metadata<T>();
+		return get_metadata<Ret>(table, FWD(key));
 	}
 
 	template<typename T, typename Key>
