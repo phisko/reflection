@@ -174,7 +174,7 @@ static_assert(putils::reflection::with_class_name<reflectible>);
 
 ## Metadata
 
-Attributes and methods can be annotated with custom metadata like so:
+Types, attributes and methods can be annotated with custom metadata like so:
 
 ```cpp
 struct with_metadata {
@@ -184,6 +184,9 @@ struct with_metadata {
 
 #define refltype with_metadata
 putils_reflection_info {
+    putils_reflection_type_metadata(
+        putils_reflection_metadata("key", "value")
+    );
     putils_reflection_attributes(
         putils_reflection_attribute(i, putils_reflection_metadata("meta_key", "meta_value"))
     );
@@ -200,6 +203,12 @@ Metadata can then be accessed directly from the `metadata` table in the `attribu
 
 They may also be queried and accessed through helper functions:
 ```cpp
+template<typename T, typename Key>
+constexpr bool has_metadata(Key && key) noexcept;
+
+template<typename Ret, typename T, typename Key>
+constexpr const Ret * get_metadata(Key && key) noexcept;
+
 template<typename T, typename Key>
 constexpr bool has_attribute_metadata(std::string_view attribute, Key && key) noexcept;
 

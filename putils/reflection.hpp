@@ -19,6 +19,7 @@ namespace putils::reflection {
 	// 		static constexpr auto methods = std::tuple<attribute_info>;
 	// 		static constexpr auto parents = std::tuple<used_type_info>;
 	// 		static constexpr auto used_types = std::tuple<used_type_info>;
+	//		static constexpr auto metadata = putils::table<...>;
 
 	template<typename MemberPtr, typename MetadataTable>
 	struct attribute_info {
@@ -160,6 +161,12 @@ namespace putils::reflection {
 	// Try to find a method called "name" and get an optional functor calling it on obj
 	template<typename Signature, typename T>
 	constexpr auto get_method(T && obj, std::string_view name) noexcept;
+
+	template<typename T, typename Key>
+	constexpr bool has_metadata(Key && key) noexcept;
+
+	template<typename Ret, typename T, typename Key>
+	constexpr const Ret * get_metadata(Key && key) noexcept;
 
 	template<typename T, typename Key>
 	constexpr bool has_attribute_metadata(std::string_view attribute, Key && key) noexcept;
